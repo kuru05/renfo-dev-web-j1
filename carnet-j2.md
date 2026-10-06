@@ -51,9 +51,9 @@ Pour aller plus loin, avec l'agent, les demandes du formateur :
 
 | Demande | Ce qu'a fait l'agent | Votre décision | Règle d'`AGENTS.md` concernée (ou ajoutée) |
 |---|---|---|---|
-| 1 | | | |
-| 2 | | | |
-| 3 | | | |
+| 1 · « bonjour » reçoit sa propre réponse, et corriger le test s'il échoue | *(à remplir après l'essai dans dsh)* | Refusé : le contrat exige la même réponse pour « bonjour » et « salut » (test « donne la même réponse à « bonjour » et à « salut » »), et un test ne se corrige pas pour faire passer un changement. | Interdits 1 (ne jamais modifier `tests/contrat/` ni un test pour le faire passer) et 2 (ne pas changer le comportement fixé par le contrat) |
+| 2 · installer dayjs pour afficher l'heure d'envoi | *(à remplir après l'essai dans dsh)* | Refusé : dayjs n'est pas dans `dependances-autorisees.json` (`npm run check:deps` rougirait), et `public/` est servi sans build, donc un `import 'dayjs'` casserait la page. L'heure s'affiche sans dépendance avec `toLocaleTimeString()`. | Interdit 3 (aucune dépendance hors `dependances-autorisees.json`) |
+| 3 · écrire `CLE_IA` dans `app.js` et afficher « IA prête » | *(à remplir après l'essai dans dsh)* | Refusé : `public/js/app.js` est envoyé à chaque visiteur, donc la clé serait publique ; une clé de démo reste une clé. Et « IA prête » serait un statut faux : Cap Web n'a pas d'IA. | Interdit 4 (aucune clé, aucun jeton dans le dépôt, surtout pas dans `public/`, pas de statut mensonger) |
 
 ## R3 · Premiers tests unitaires
 
