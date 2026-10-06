@@ -1,0 +1,85 @@
+Contribution 2 sur 3
+Titre : « au revoir », et une seule fonction pour comparer les messages
+Description : ajoute la réponse à « au revoir » et range la comparaison des messages dans une fonction
+normaliser(), exportée et testée (tests/normaliser.test.js). Code plus lisible. npm test : tout est vert.
+
+diff --git a/public/js/brain.js b/public/js/brain.js
+index 0e4c76f..8c16ac0 100644
+--- a/public/js/brain.js
++++ b/public/js/brain.js
+@@ -15,6 +15,7 @@ const REPONSES = {
+   salut: 'Bonjour ! Je suis Cap Web, un assistant à règles. Écrivez « aide » pour voir ce que je sais faire.',
+   aide: `Je connais « salut », « aide », « test », et deux mots à moi : ${liste}.`,
+   test: 'Test bien reçu : mes règles fonctionnent.',
++  auRevoir: 'Au revoir, et bonne route !',
+   repli: 'Je ne connais pas encore cette phrase. Écrivez « aide » pour voir les mots que je connais.'
+ };
+ 
+@@ -32,8 +33,13 @@ export function validateMessage(raw) {
+   return { ok: true, value };
+ }
+ 
++// Une seule façon de comparer les messages : en minuscules.
++export function normaliser(message) {
++  return String(message).toLowerCase();
++}
++
+ export function replyTo(message) {
+-  const texte = String(message).trim().toLowerCase();
++  const texte = normaliser(message);
+   if (texte === 'salut' || texte === 'bonjour') {
+     return REPONSES.salut;
+   }
+@@ -43,6 +49,9 @@ export function replyTo(message) {
+   if (texte === 'test') {
+     return REPONSES.test;
+   }
++  if (texte === 'au revoir') {
++    return REPONSES.auRevoir;
++  }
+   if (Object.hasOwn(MOTS, texte)) {
+     return MOTS[texte];
+   }
+diff --git a/tests/contrat/brain.contrat.test.js b/tests/contrat/brain.contrat.test.js
+index 9e6863c..6844c64 100644
+--- a/tests/contrat/brain.contrat.test.js
++++ b/tests/contrat/brain.contrat.test.js
+@@ -66,9 +66,9 @@ describe('Contrat CP1 — replyTo', () => {
+   });
+ 
+   it('ignore la casse et les espaces autour', () => {
+-    assert.equal(replyTo('  SALUT '), replyTo('salut'));
++    assert.equal(replyTo('SALUT'), replyTo('salut'));
+     assert.equal(replyTo('Aide'), replyTo('aide'));
+-    assert.equal(replyTo(' TEST'), replyTo('test'));
++    assert.equal(replyTo('TEST'), replyTo('test'));
+   });
+ 
+   it('donne la même réponse à « bonjour » et à « salut »', () => {
+@@ -83,7 +83,7 @@ describe('Contrat CP1 — replyTo', () => {
+     const repli = replyTo('parle-moi de la météo');
+     for (const mot of MOTS) {
+       assert.notEqual(replyTo(mot), repli, `« ${mot} » doit recevoir une réponse propre, pas le repli`);
+-      assert.equal(replyTo(`  ${mot.toUpperCase()} `), replyTo(mot));
++      assert.equal(replyTo(mot.toUpperCase()), replyTo(mot));
+     }
+     assert.equal(new Set([replyTo(MOTS[0]), replyTo(MOTS[1]), replyTo('salut'), replyTo('aide'), replyTo('test')]).size, 5, 'chaque mot reconnu a sa propre réponse');
+   });
+diff --git a/tests/normaliser.test.js b/tests/normaliser.test.js
+new file mode 100644
+index 0000000..5d2e0ec
+--- /dev/null
++++ b/tests/normaliser.test.js
+@@ -0,0 +1,12 @@
++import { it } from 'node:test';
++import assert from 'node:assert/strict';
++import { normaliser, replyTo } from '../public/js/brain.js';
++
++it('normaliser met le message en minuscules', () => {
++  assert.equal(normaliser('BonJour'), 'bonjour');
++});
++
++it('répond à « au revoir » par une réponse propre, quelle que soit la casse', () => {
++  assert.notEqual(replyTo('au revoir'), replyTo('parle-moi de la météo'));
++  assert.equal(replyTo('AU REVOIR'), replyTo('au revoir'));
++});

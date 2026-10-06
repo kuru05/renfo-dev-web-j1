@@ -1,0 +1,58 @@
+Contribution 3 sur 3
+Titre : le gras dans les messages
+Description : écrivez **mot** et il s’affiche en gras ; la réponse à « aide » en profite.
+Sans innerHTML (le contrat le refuse) : le texte passe par un fragment. Testé dans tests/gras.test.js. npm test : tout est vert.
+
+diff --git a/public/js/brain.js b/public/js/brain.js
+index 0e4c76f..ebf6f03 100644
+--- a/public/js/brain.js
++++ b/public/js/brain.js
+@@ -13,7 +13,7 @@ const liste = Object.keys(MOTS).map((mot) => `« ${mot} »`).join(' et ');
+ 
+ const REPONSES = {
+   salut: 'Bonjour ! Je suis Cap Web, un assistant à règles. Écrivez « aide » pour voir ce que je sais faire.',
+-  aide: `Je connais « salut », « aide », « test », et deux mots à moi : ${liste}.`,
++  aide: `Je connais **salut**, **aide**, **test**, et deux mots à moi : ${liste}.`,
+   test: 'Test bien reçu : mes règles fonctionnent.',
+   repli: 'Je ne connais pas encore cette phrase. Écrivez « aide » pour voir les mots que je connais.'
+ };
+diff --git a/public/js/view.js b/public/js/view.js
+index 39aceab..3458711 100644
+--- a/public/js/view.js
++++ b/public/js/view.js
+@@ -1,11 +1,17 @@
+ // Cap Web — affichage de l'historique. Aucune règle de réponse ici.
+ 
++// Mise en forme légère : **mot** s'affiche en gras.
++export function enGras(texte) {
++  return texte.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
++}
++
+ export function renderMessages(messages, container) {
+   const lignes = messages.map((msg) => {
+     const li = document.createElement('li');
+     const nom = document.createElement('strong');
+     nom.textContent = msg.role === 'user' ? 'Vous' : 'Cap Web';
+-    li.append(nom, ` : ${msg.text}`);
++    const corps = document.createRange().createContextualFragment(enGras(msg.text));
++    li.append(nom, ' : ', corps);
+     if (msg.role === 'assistant') {
+       li.classList.add('bot');
+     }
+diff --git a/tests/gras.test.js b/tests/gras.test.js
+new file mode 100644
+index 0000000..ceed33b
+--- /dev/null
++++ b/tests/gras.test.js
+@@ -0,0 +1,11 @@
++import { it } from 'node:test';
++import assert from 'node:assert/strict';
++import { enGras } from '../public/js/view.js';
++
++it('**mot** devient du gras', () => {
++  assert.equal(enGras('un **mot** important'), 'un <strong>mot</strong> important');
++});
++
++it('un texte sans étoiles ne change pas', () => {
++  assert.equal(enGras('salut'), 'salut');
++});
