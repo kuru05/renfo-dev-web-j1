@@ -58,3 +58,12 @@ export function estEnMajuscules(message) {
   const lettres = message.match(/\p{L}/gu) ?? [];
   return lettres.length >= 2 && !/\p{Ll}/u.test(message);
 }
+
+// Nombre de mots du message : tout groupe d'espaces, tabulations ou retours à la ligne sépare deux mots.
+export function compterMots(message) {
+  if (typeof message !== 'string') {
+    return 0;
+  }
+  const texte = message.trim();
+  return texte === '' ? 0 : texte.split(/\s+/).length;
+}
