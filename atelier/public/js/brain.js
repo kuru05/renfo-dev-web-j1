@@ -48,3 +48,13 @@ export function replyTo(message) {
   // Message inconnu : un repli distinct, qui renvoie vers « aide ».
   return REPONSES.repli;
 }
+
+// Vrai si le message contient au moins deux lettres et aucune minuscule.
+// Les accents comptent comme des lettres (« OÙ »), les chiffres et la ponctuation non.
+export function estEnMajuscules(message) {
+  if (typeof message !== 'string') {
+    return false;
+  }
+  const lettres = message.match(/\p{L}/gu) ?? [];
+  return lettres.length >= 2 && !/\p{Ll}/u.test(message);
+}
