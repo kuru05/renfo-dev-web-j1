@@ -1,0 +1,43 @@
+Contribution 1 sur 3
+Titre : Cap Web répond à « merci »
+Description : « merci » reçoit sa propre réponse, quelles que soient la casse et les espaces autour.
+Un test est ajouté dans tests/merci.test.js. npm test : tout est vert.
+
+diff --git a/public/js/brain.js b/public/js/brain.js
+index 0e4c76f..404ed2d 100644
+--- a/public/js/brain.js
++++ b/public/js/brain.js
+@@ -15,6 +15,7 @@ const REPONSES = {
+   salut: 'Bonjour ! Je suis Cap Web, un assistant à règles. Écrivez « aide » pour voir ce que je sais faire.',
+   aide: `Je connais « salut », « aide », « test », et deux mots à moi : ${liste}.`,
+   test: 'Test bien reçu : mes règles fonctionnent.',
++  merci: 'Avec plaisir ! Écrivez « aide » pour revoir ce que je sais faire.',
+   repli: 'Je ne connais pas encore cette phrase. Écrivez « aide » pour voir les mots que je connais.'
+ };
+ 
+@@ -43,6 +44,9 @@ export function replyTo(message) {
+   if (texte === 'test') {
+     return REPONSES.test;
+   }
++  if (texte === 'merci') {
++    return REPONSES.merci;
++  }
+   if (Object.hasOwn(MOTS, texte)) {
+     return MOTS[texte];
+   }
+diff --git a/tests/merci.test.js b/tests/merci.test.js
+new file mode 100644
+index 0000000..783a4b6
+--- /dev/null
++++ b/tests/merci.test.js
+@@ -0,0 +1,10 @@
++import { it } from 'node:test';
++import assert from 'node:assert/strict';
++import { replyTo } from '../public/js/brain.js';
++
++it('répond à « merci » par une réponse propre, quelles que soient la casse et les espaces autour', () => {
++  const repli = replyTo('parle-moi de la météo');
++  assert.notEqual(replyTo('merci'), repli);
++  assert.equal(replyTo('  MERCI '), replyTo('merci'));
++  assert.ok(![replyTo('salut'), replyTo('aide'), replyTo('test')].includes(replyTo('merci')));
++});
