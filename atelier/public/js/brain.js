@@ -8,11 +8,11 @@ const MOTS = {
   marché: 'Le marché ouvre le samedi matin.'
 };
 
-const liste = Object.keys(MOTS).map((mot) => `« ${mot} »`).join(' et ');
+const motsConnus = Object.keys(MOTS).map((mot) => `« ${mot} »`).join(' et ');
 
 const REPONSES = {
   salut: 'Bonjour ! Je suis Cap Web, un assistant à règles. Écrivez « aide » pour voir ce que je sais faire.',
-  aide: `Je connais « salut », « aide », « test », et deux mots à moi : ${liste}.`,
+  aide: `Je connais « salut », « aide », « test », et deux mots à moi : ${motsConnus}.`,
   test: 'Test bien reçu : mes règles fonctionnent.',
   repli: 'Je n’ai pas compris. Écrivez « aide » pour voir ce que je sais faire.'
 };
