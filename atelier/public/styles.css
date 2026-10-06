@@ -1,0 +1,91 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, sans-serif;
+  line-height: 1.5;
+  color: #15213a;
+  background: #ffffff;
+}
+
+header,
+main,
+footer {
+  max-width: 48rem;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+h1,
+h2 {
+  margin: 0 0 0.5rem;
+}
+
+footer {
+  font-size: 0.9rem;
+}
+
+#messages {
+  list-style: none;
+  margin: 1rem 0;
+  padding: 0;
+}
+
+#messages li {
+  margin-bottom: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #5b6b8c;
+  border-radius: 0.5rem;
+  overflow-wrap: break-word;
+}
+
+#chat-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+label {
+  font-weight: 700;
+}
+
+textarea {
+  width: 100%;
+  padding: 0.5rem;
+  font: inherit;
+  color: inherit;
+  border: 2px solid #5b6b8c;
+  border-radius: 0.5rem;
+}
+
+button {
+  align-self: flex-start;
+  padding: 0.6rem 1.2rem;
+  font: inherit;
+  font-weight: 700;
+  color: #ffffff;
+  background: #0f5c9e;
+  border: 2px solid #0a3f6e;
+  border-radius: 0.5rem;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #0a3f6e;
+}
+
+#suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  list-style: none;
+  margin: 1rem 0;
+  padding: 0;
+}
+
+#status {
+  min-height: 1.5em;
+  font-weight: 700;
+}

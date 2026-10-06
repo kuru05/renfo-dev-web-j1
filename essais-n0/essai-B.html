@@ -1,0 +1,1187 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Guichet Clairval, bus et tram</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Semi+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --quai:#E4EAE8;        /* fond du plan */
+  --page:#FAFBF9;        /* fond de la conversation */
+  --carte:#FFFFFF;
+  --encre:#10262E;       /* texte, traits */
+  --encre-2:#4C6068;     /* texte secondaire */
+  --filet:#C6D0CE;
+  --jaune:#FFD21F;       /* tout ce qui vient du voyageur */
+  --tableau:#0F2A33;     /* afficheur de quai */
+  --ambre:#FFB52E;
+  --texte:"Barlow",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --signal:"Barlow Semi Condensed","Barlow","Arial Narrow",system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--page);color:var(--encre);font-family:var(--texte);font-size:16px;line-height:1.45;-webkit-font-smoothing:antialiased}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--encre);outline-offset:2px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+.app{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(370px,540px);height:100vh;height:100dvh}
+
+/* ---------- Plan ---------- */
+.plan{background:var(--quai);display:flex;flex-direction:column;min-height:0;padding:20px 24px 16px;border-right:1px solid var(--filet)}
+.plan-tete{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.plan-tete h2{font-family:var(--signal);font-weight:600;font-size:1.25rem;margin:0}
+.plan-tete p{margin:0;color:var(--encre-2);font-size:.9rem;flex:1 1 200px}
+.lien{background:none;border:0;padding:2px 0;border-bottom:1.5px solid var(--encre);font-weight:500;font-size:.9rem}
+.lien:hover{background:var(--jaune)}
+#planFermer{display:none}
+.plan-vue{flex:1 1 auto;min-height:0;margin:6px 0;display:flex}
+#carte{width:100%;height:100%}
+.ligne{fill:none;stroke-linecap:round;stroke-linejoin:round;transition:opacity .2s}
+.arret{cursor:pointer;transition:opacity .2s}
+.arret circle.pt{fill:#fff;stroke:var(--encre);stroke-width:2}
+.arret.noeud circle.pt{stroke-width:2.6}
+.arret circle.zone{fill:transparent}
+.arret text{font-family:var(--signal);font-size:13.5px;font-weight:500;fill:var(--encre);paint-order:stroke;stroke:var(--quai);stroke-width:4px;stroke-linejoin:round}
+.arret.noeud text{font-weight:700}
+.arret:hover circle.pt,.arret:focus-visible circle.pt{fill:var(--jaune)}
+.arret:focus-visible{outline:none}
+.arret:focus-visible circle.zone{stroke:var(--encre);stroke-width:2;stroke-dasharray:3 3}
+#carte.filtre .ligne{opacity:.14}
+#carte.filtre .arret{opacity:.32}
+#carte.filtre .ligne.on,#carte.filtre .arret.on{opacity:1}
+.arret.bout circle.pt{fill:var(--jaune);stroke-width:3}
+.arret.bout text{font-weight:700}
+.legende{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:6px 18px}
+.legende button{background:none;border:0;padding:3px 0;display:flex;align-items:center;gap:7px;font-size:.88rem;color:var(--encre-2)}
+.legende button:hover{color:var(--encre);text-decoration:underline}
+
+/* ---------- Pastilles de ligne ---------- */
+.pastille{display:inline-flex;align-items:center;justify-content:center;min-width:1.9em;height:1.55em;padding:0 .35em;background:var(--c);color:var(--ct,#fff);font-family:var(--signal);font-weight:700;font-size:.95em;line-height:1;border-radius:4px;vertical-align:middle;flex:none}
+.pastille.tram{border-radius:1em;min-width:2.1em}
+
+/* ---------- Guichet ---------- */
+.guichet{display:flex;flex-direction:column;min-height:0;min-width:0}
+.tete{display:flex;align-items:center;gap:14px;padding:16px 22px 14px;border-bottom:1px solid var(--filet)}
+.tete h1{font-family:var(--signal);font-weight:700;font-size:1.55rem;letter-spacing:-.01em;line-height:1;margin:0}
+.tete p{margin:3px 0 0;font-size:.85rem;color:var(--encre-2)}
+.tete .titre{flex:1;min-width:0}
+#horloge{font-family:var(--signal);font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap;text-align:right;font-size:.95rem;line-height:1.2}
+#horloge b{display:block;font-size:1.35rem;font-weight:700}
+#planOuvrir{display:none;border:1.5px solid var(--encre);background:none;border-radius:4px;padding:6px 12px;font-weight:600}
+
+#fil{flex:1 1 auto;min-height:0;overflow-y:auto;padding:20px 22px 8px;position:relative;scroll-behavior:smooth}
+.msg{margin:0 0 16px;max-width:100%}
+.msg.moi{display:flex;justify-content:flex-end}
+.msg.moi span{background:var(--jaune);padding:8px 13px;border-radius:3px 3px 0 3px;max-width:85%;font-weight:500;overflow-wrap:anywhere}
+.msg.bot>p{margin:0 0 8px;max-width:58ch}
+.msg.bot>p:last-child{margin-bottom:0}
+.msg.bot strong{font-weight:600}
+.attente{color:var(--encre-2);font-style:italic}
+
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.chips button{background:var(--carte);border:1.5px solid var(--encre);border-radius:999px;padding:5px 13px;font-size:.92rem;font-weight:500;text-align:left}
+.chips button:hover{background:var(--encre);color:#fff}
+
+.carte{background:var(--carte);border:1px solid var(--filet);border-top:3px solid var(--encre);border-radius:2px 2px 6px 6px;margin:10px 0 0;padding:14px 16px}
+.carte h3{font-family:var(--signal);font-weight:700;font-size:1.2rem;line-height:1.15;margin:0}
+.carte .sous{color:var(--encre-2);font-size:.9rem;margin:2px 0 0}
+.note{color:var(--encre-2);font-size:.9rem;margin:10px 0 0}
+
+/* Trajet */
+.resume{display:flex;align-items:baseline;gap:6px 14px;flex-wrap:wrap;margin:6px 0 12px;font-family:var(--signal)}
+.resume .heures{font-size:1.7rem;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.01em;line-height:1.1}
+.resume .duree{font-weight:600;font-size:1.05rem}
+.resume .corr{color:var(--encre-2);font-weight:500}
+.etapes{list-style:none;margin:0;padding:0}
+.etape{position:relative;display:grid;grid-template-columns:3.3em 22px 1fr;column-gap:8px;row-gap:2px}
+.etape::before{content:"";position:absolute;left:calc(3.3em + 8px + 7px);top:.75em;bottom:.75em;width:8px;border-radius:4px;background:var(--c)}
+.etape time{font-family:var(--signal);font-weight:600;font-variant-numeric:tabular-nums;text-align:right}
+.etape .pt{position:relative;z-index:1;width:14px;height:14px;border-radius:50%;background:#fff;border:3px solid var(--encre);margin:.3em 0 0 4px}
+.etape .nom{font-weight:600}
+.etape .parcours{grid-column:3;padding:4px 0 10px;font-size:.93rem;color:var(--encre-2)}
+.etape .parcours .dir{color:var(--encre);margin-left:4px}
+.etape details{margin-top:3px}
+.etape summary{cursor:pointer;width:fit-content}
+.etape details ul{margin:4px 0 0;padding:0 0 0 1.1em}
+.attendre{list-style:none;margin:6px 0 6px calc(3.3em + 38px);padding:2px 0 2px 0;font-size:.9rem;color:var(--encre-2)}
+.suite{border-top:1px solid var(--filet);margin:12px 0 0;padding-top:10px;font-size:.93rem}
+.suite p{margin:0 0 3px}
+.suite p:last-child{margin:0}
+
+/* Afficheur de quai */
+.afficheur{background:var(--tableau);border-color:var(--tableau);border-top-color:var(--ambre);color:#E8EEEC}
+.afficheur .sous{color:#A9BBBE}
+.afficheur ul{list-style:none;margin:12px 0 0;padding:0}
+.afficheur li{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid rgba(255,255,255,.13)}
+.afficheur .vers{flex:1;min-width:0;font-family:var(--signal);font-weight:500;line-height:1.2}
+.afficheur .temps{display:flex;gap:12px;font-family:var(--signal);font-weight:600;font-variant-numeric:tabular-nums;color:var(--ambre);white-space:nowrap}
+.afficheur .temps span:first-child{font-size:1.15rem;font-weight:700}
+.afficheur .temps span+span{opacity:.75}
+.afficheur .temps .fl{font-size:1.1rem;font-weight:700;opacity:1;text-align:right}
+.afficheur .temps .fl small{display:block;font-family:var(--texte);font-size:.72rem;font-weight:400;color:#A9BBBE}
+.afficheur .vide{color:#A9BBBE;font-size:.9rem;text-align:right;font-family:var(--texte);font-weight:400;white-space:normal}
+
+/* Fiche de ligne */
+.fiche-tete{display:flex;align-items:center;gap:10px}
+.fiche-tete .pastille{font-size:1.25rem}
+.thermo{list-style:none;margin:14px 0 0;padding:0;position:relative}
+.thermo::before{content:"";position:absolute;left:5px;top:.7em;bottom:.7em;width:6px;border-radius:3px;background:var(--c)}
+.thermo li{position:relative;padding:2px 0 2px 28px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.thermo li::before{content:"";position:absolute;left:2px;top:.5em;width:12px;height:12px;border-radius:50%;background:#fff;border:2.5px solid var(--encre)}
+.thermo li.bout{font-weight:600}
+.thermo .pastille{font-size:.72em}
+.services{margin:14px 0 0;padding:0}
+.services div{padding:8px 0;border-top:1px solid var(--filet)}
+.services dt{font-weight:600}
+.services dd{margin:0;color:var(--encre-2);font-size:.93rem}
+.services .jour dt::after{content:" (aujourd'hui)";font-weight:400;color:var(--encre-2)}
+
+/* Réseau */
+.reseau{list-style:none;margin:10px 0 0;padding:0}
+.reseau li{display:flex;gap:10px;align-items:baseline;padding:8px 0;border-top:1px solid var(--filet)}
+.reseau li:first-child{border-top:0}
+.reseau b{font-weight:600}
+.reseau small{display:block;color:var(--encre-2);font-size:.88rem}
+
+/* Tarifs */
+.tarifs{width:100%;border-collapse:collapse;margin:10px 0 0}
+.tarifs th,.tarifs td{text-align:left;padding:7px 0;border-top:1px solid var(--filet);vertical-align:top;font-weight:400}
+.tarifs tr:first-child th,.tarifs tr:first-child td{border-top:0}
+.tarifs th{font-weight:600;padding-right:12px}
+.tarifs th small{display:block;font-weight:400;color:var(--encre-2);font-size:.86rem}
+.tarifs td{text-align:right;white-space:nowrap;font-family:var(--signal);font-weight:700;font-size:1.08rem;font-variant-numeric:tabular-nums}
+.tarifs .groupe th{padding-top:14px;font-family:var(--signal);font-size:1rem;color:var(--encre-2);border-top:0}
+
+/* Saisie */
+#saisie{display:flex;gap:8px;padding:12px 22px 18px;border-top:1px solid var(--filet);background:var(--page)}
+#saisie input{flex:1;min-width:0;border:1.5px solid var(--encre);border-radius:4px;padding:11px 13px;background:#fff}
+#saisie input::placeholder{color:#7A8C92}
+#saisie input:focus-visible{outline-width:2px;outline-offset:1px}
+#saisie button{background:var(--jaune);border:1.5px solid var(--encre);border-radius:4px;padding:0 18px;font-weight:600}
+#saisie button:hover{background:var(--encre);color:#fff}
+
+@media (max-width:880px){
+  .app{grid-template-columns:1fr}
+  .plan{display:none;position:fixed;inset:0;z-index:10;border:0;padding:14px 14px 12px}
+  .app.plan-ouvert .plan{display:flex}
+  #planFermer{display:inline-block}
+  .plan-vue{display:block;overflow:auto;margin:10px -14px;-webkit-overflow-scrolling:touch}
+  #carte{width:900px;height:auto;display:block}
+  .legende{display:grid;grid-template-columns:1fr 1fr;gap:2px 12px}
+  .legende button{font-size:.8rem;text-align:left}
+  #planOuvrir{display:inline-block}
+  .tete{padding:12px 14px}
+  .tete h1{font-size:1.3rem}
+  #horloge{font-size:.8rem}
+  #horloge b{font-size:1.1rem}
+  #fil{padding:16px 14px 6px}
+  #saisie{padding:10px 14px 14px}
+  .arret text{font-size:15px}
+}
+@media (max-width:420px){ .tete p{display:none} }
+@media (prefers-reduced-motion:reduce){ *{transition:none!important;scroll-behavior:auto!important} }
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <aside class="plan" aria-label="Plan du réseau">
+    <div class="plan-tete">
+      <h2>Plan du réseau</h2>
+      <p>Touchez un arrêt pour voir ses prochains passages.</p>
+      <button class="lien" id="planTout" hidden>Afficher tout le réseau</button>
+      <button class="lien" id="planFermer">Fermer le plan</button>
+    </div>
+    <div class="plan-vue" id="planVue"><svg id="carte" viewBox="0 14 950 610" role="group" aria-label="Plan schématique des lignes de tram et de bus"></svg></div>
+    <ul class="legende" id="legende"></ul>
+  </aside>
+
+  <main class="guichet">
+    <header class="tete">
+      <div class="titre">
+        <h1>Guichet Clairval</h1>
+        <p>Bus et tram d'un réseau fictif</p>
+      </div>
+      <div id="horloge" aria-label="Heure actuelle"></div>
+      <button id="planOuvrir">Plan</button>
+    </header>
+    <div id="fil" role="log" aria-live="polite" aria-label="Conversation"></div>
+    <form id="saisie" autocomplete="off">
+      <label class="sr" for="champ">Votre question</label>
+      <input id="champ" type="text" placeholder="De la gare au stade à 8h30" enterkeyhint="send">
+      <button type="submit">Envoyer</button>
+    </form>
+  </main>
+</div>
+
+<!-- =====================================================================
+     MOTEUR : données du réseau, calcul d'itinéraire, compréhension des
+     questions. Aucun accès réseau : tout tourne dans la page.
+     ===================================================================== -->
+<script id="moteur">
+(function (root) {
+'use strict';
+
+/* ---------------- Données du réseau (fictif) ---------------- */
+// [id, nom, x, y, position de l'étiquette sur le plan, alias]
+const STOPS_RAW = [
+  ['pra','Les Prairies',60,320,'s',[]],
+  ['cam','Campus Sciences',150,320,'n',['campus','fac','la fac','universite','sciences']],
+  ['jar','Jardin Botanique',240,320,'s',['botanique','jardin des plantes']],
+  ['hal','Les Halles',330,320,'n',[]],
+  ['hdv','Hôtel de Ville',420,320,'ne2',['mairie','centre ville']],
+  ['gar','Gare Centrale',510,320,'ne2',['gare','gare sncf']],
+  ['qua','Quai des Arts',600,320,'se',['quai']],
+  ['pon','Pont Neuf',690,320,'n',[]],
+  ['sta','Stade Lumière',780,320,'se',['stade']],
+  ['exp','Parc des Expositions',870,320,'n',['parc des expos','parc expo','expo','expositions']],
+  ['hop','Hôpital Nord',510,50,'e',['hopital','chu']],
+  ['cot','Les Coteaux',510,140,'ne',[]],
+  ['mar','Place du Marché',510,230,'e',[]],
+  ['the','Théâtre',510,410,'ne',[]],
+  ['vpo','Vieux Port',510,500,'nw',['port']],
+  ['pla','Plage du Levant',510,590,'e',['plage','levant']],
+  ['boi','Bois Joli',150,50,'e',[]],
+  ['cit','Cité Jardins',240,140,'w',[]],
+  ['mus','Musée des Beaux-Arts',330,230,'e',['musee','beaux arts']],
+  ['doc','Les Docks',600,500,'e',[]],
+  ['zpo','Zone Portuaire',690,590,'e',['port de commerce']],
+  ['tec','Technopole',870,50,'w',[]],
+  ['bel','Belvédère',780,140,'e',[]],
+  ['con','Conservatoire',690,230,'nw',[]],
+  ['fle','Marché aux Fleurs',600,410,'e2',['fleurs']],
+  ['pis','Piscine Olympique',330,140,'n',['piscine']],
+  ['lyc','Lycée Voltaire',420,140,'s',['lycee']],
+  ['bib','Bibliothèque',600,140,'s',['mediatheque']],
+  ['til','Les Tilleuls',690,140,'n',[]],
+  ['mon','Parc Monplaisir',780,230,'e',['monplaisir']],
+  ['res','Cité Universitaire',150,410,'e',['cite u','residence universitaire','residences universitaires']],
+  ['fon','La Fontaine',240,500,'s',[]],
+  ['roc','Saint-Roch',330,500,'n',['st roch']],
+  ['cap','Capitainerie',420,500,'s',[]],
+  ['nav','Chantiers Navals',690,410,'e',['chantiers']]
+];
+
+// Horaires : premier et dernier départ du terminus (minutes depuis minuit),
+// puis fréquence par tranche [jusqu'à, intervalle en minutes].
+const LINES = [
+  {id:'T1',mode:'tram',color:'#D6212B',ink:'#fff',
+   stops:['pra','cam','jar','hal','hdv','gar','qua','pon','sta','exp'],seg:[2,2,2,2,2,2,2,2,3],
+   svc:{sem:{first:300,last:1470,bands:[[390,12],[570,5],[960,8],[1170,5],[1320,10],[9999,15]]},
+        sam:{first:330,last:1500,bands:[[600,12],[1200,8],[9999,15]]},
+        dim:{first:390,last:1410,bands:[[1260,15],[9999,20]]}}},
+  {id:'T2',mode:'tram',color:'#1766B5',ink:'#fff',
+   stops:['hop','cot','mar','gar','the','vpo','pla'],seg:[3,2,2,2,2,3],
+   svc:{sem:{first:310,last:1460,bands:[[390,12],[570,6],[960,9],[1170,6],[1320,12],[9999,15]]},
+        sam:{first:340,last:1500,bands:[[600,12],[1200,9],[9999,15]]},
+        dim:{first:400,last:1400,bands:[[1260,15],[9999,20]]}}},
+  {id:'10',mode:'bus',color:'#2E9B4F',ink:'#fff',
+   stops:['boi','cit','mus','hdv','the','doc','zpo'],seg:[3,3,3,3,3,4],
+   svc:{sem:{first:345,last:1350,bands:[[420,15],[540,10],[990,15],[1140,10],[1260,20],[9999,30]]},
+        sam:{first:375,last:1350,bands:[[1200,20],[9999,30]]},
+        dim:{first:450,last:1260,bands:[[9999,30]]}}},
+  {id:'11',mode:'bus',color:'#F08A00',ink:'#10262E',
+   stops:['tec','bel','con','qua','fle','doc'],seg:[4,3,3,2,2],
+   svc:{sem:{first:360,last:1290,bands:[[420,20],[540,12],[990,20],[1140,12],[9999,30]]},
+        sam:{first:390,last:1290,bands:[[1200,20],[9999,30]]},
+        dim:{first:480,last:1200,bands:[[9999,40]]}}},
+  {id:'12',mode:'bus',color:'#8B3FA0',ink:'#fff',
+   stops:['cit','pis','lyc','cot','bib','til','bel','mon','sta'],seg:[2,2,2,2,2,2,3,3],
+   svc:{sem:{first:375,last:1245,bands:[[420,20],[540,15],[990,20],[1140,15],[9999,30]]},
+        sam:{first:420,last:1200,bands:[[9999,30]]},
+        dim:null}},
+  {id:'13',mode:'bus',color:'#8A5A33',ink:'#fff',
+   stops:['cam','res','fon','roc','cap','vpo','doc','nav','sta'],seg:[2,3,2,2,2,2,3,3],
+   svc:{sem:{first:350,last:1320,bands:[[420,15],[540,10],[990,15],[1140,10],[1260,20],[9999,30]]},
+        sam:{first:390,last:1320,bands:[[1200,20],[9999,30]]},
+        dim:{first:465,last:1245,bands:[[9999,30]]}}}
+];
+
+const FARES = [
+  {g:'Tickets',id:'unite',nom:'Ticket 1 voyage',prix:1.70,info:'Valable 1 h, correspondances bus et tram incluses'},
+  {g:'Tickets',id:'bord',nom:'Ticket acheté à bord du bus',prix:2.00,info:'Carte bancaire sans contact, auprès du conducteur'},
+  {g:'Tickets',id:'carnet',nom:'Carnet de 10 voyages',prix:14.50,info:'Soit 1,45 € le voyage'},
+  {g:'Tickets',id:'soir',nom:'Ticket soirée',prix:2.50,info:'Voyages illimités de 19 h à la fin du service'},
+  {g:'Pass',id:'p24',nom:'Pass 24 h',prix:4.50,info:'Voyages illimités pendant 24 h après la première validation'},
+  {g:'Pass',id:'p72',nom:'Pass 72 h',prix:10.00,info:'Voyages illimités pendant 72 h'},
+  {g:'Abonnements',id:'mois',nom:'Mensuel',prix:42.00,info:'Tout public'},
+  {g:'Abonnements',id:'mois26',nom:'Mensuel moins de 26 ans',prix:25.00,info:'Étudiants, apprentis, scolaires'},
+  {g:'Abonnements',id:'mois65',nom:'Mensuel 65 ans et plus',prix:21.00,info:''},
+  {g:'Abonnements',id:'an',nom:'Annuel',prix:420.00,info:'12 mois pour le prix de 10'},
+  {g:'Abonnements',id:'an26',nom:'Annuel moins de 26 ans',prix:250.00,info:''},
+  {g:'Abonnements',id:'sol',nom:'Mensuel solidaire',prix:8.00,info:'Sous conditions de ressources'}
+];
+const fare = id => FARES.find(f => f.id === id);
+
+const XFER = 3;                 // minutes pour changer de ligne à un même arrêt
+const DAY_START = 240;          // la journée de service commence à 4 h
+const HOLIDAYS = new Set(['1/1','1/5','8/5','14/7','15/8','1/11','11/11','25/12']);
+const JOURS = ['dimanche','lundi','mardi','mercredi','jeudi','vendredi','samedi'];
+const MOIS = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+
+/* ---------------- Préparation ---------------- */
+function norm(s) {
+  return String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/œ/g, 'oe').replace(/→|->|=>/g, ' vers ')
+    .replace(/[^a-z0-9:]+/g, ' ').replace(/(^|[^0-9]):/g, '$1 ').replace(/:(?![0-9])/g, ' ')
+    .replace(/\s+/g, ' ').trim();
+}
+
+const stopById = {};
+const ALIASES = [];
+STOPS_RAW.forEach(([id, name, x, y, lab, al]) => {
+  const n = norm(name);
+  const set = new Set([n, ...al]);
+  const m = n.match(/^(?:les|la|le) (.+)$/);
+  if (m) set.add(m[1]);
+  stopById[id] = {id, name, x, y, lab, lines: []};
+  set.forEach(a => ALIASES.push([a, id]));
+});
+ALIASES.sort((a, b) => b[0].length - a[0].length);
+
+const lineById = {};
+const ROUTES = [];
+LINES.forEach(L => {
+  lineById[L.id] = L;
+  L.label = L.mode === 'tram' ? 'Tram ' + L.id : 'Bus ' + L.id;
+  L.total = L.seg.reduce((a, b) => a + b, 0);
+  L.stops.forEach(s => stopById[s].lines.push(L.id));
+  [0, 1].forEach(d => {
+    const stops = d ? L.stops.slice().reverse() : L.stops.slice();
+    const seg = d ? L.seg.slice().reverse() : L.seg;
+    const cum = [0];
+    seg.forEach(m => cum.push(cum[cum.length - 1] + m));
+    const idx = {};
+    stops.forEach((s, i) => { idx[s] = i; });
+    ROUTES.push({line: L, dir: d, stops, cum, idx, off: d ? 2 : 0, head: stops[stops.length - 1], cache: {}});
+  });
+});
+
+function headway(svc, t) {
+  for (const b of svc.bands) if (t < b[0]) return b[1];
+  return svc.bands[svc.bands.length - 1][1];
+}
+function depsOf(route, dt) {
+  if (route.cache[dt]) return route.cache[dt];
+  const svc = route.line.svc[dt], a = [];
+  if (svc) {
+    let t = svc.first;
+    while (t < svc.last) { a.push(t + route.off); t += headway(svc, t); }
+    a.push(svc.last + route.off);
+  }
+  return (route.cache[dt] = a);
+}
+function dayType(date) {
+  if (HOLIDAYS.has(date.getDate() + '/' + (date.getMonth() + 1))) return 'dim';
+  const d = date.getDay();
+  return d === 0 ? 'dim' : d === 6 ? 'sam' : 'sem';
+}
+function toService(d) {
+  const date = new Date(d);
+  let min = d.getHours() * 60 + d.getMinutes();
+  if (min < DAY_START) { date.setDate(date.getDate() - 1); min += 1440; }
+  date.setHours(0, 0, 0, 0);
+  return {date, min};
+}
+function addDays(date, n) { const d = new Date(date); d.setDate(d.getDate() + n); return d; }
+function lowerBound(a, x) { let lo = 0, hi = a.length; while (lo < hi) { const m = (lo + hi) >> 1; if (a[m] < x) lo = m + 1; else hi = m; } return lo; }
+
+/* ---------------- Calcul d'itinéraire (RAPTOR, par nombre de montées) ---------------- */
+function raptor(from, to, t0, dt) {
+  const INF = 1e9, K = 4;
+  const best = {}; best[from] = t0;
+  const tau = [{}], par = [{}];
+  tau[0][from] = t0;
+  const options = [];
+  for (let k = 1; k <= K; k++) {
+    tau[k] = {}; par[k] = {};
+    const prev = tau[k - 1];
+    if (!Object.keys(prev).length) break;
+    for (const r of ROUTES) {
+      const deps = depsOf(r, dt);
+      if (!deps.length) continue;
+      let trip = null, bi = -1;
+      for (let i = 0; i < r.stops.length; i++) {
+        const s = r.stops[i];
+        if (trip !== null) {
+          const arr = trip + r.cum[i];
+          const lim = Math.min(best[s] === undefined ? INF : best[s], best[to] === undefined ? INF : best[to]);
+          if (arr < lim) { tau[k][s] = arr; best[s] = arr; par[k][s] = {r, trip, bi, ai: i}; }
+        }
+        if (prev[s] !== undefined) {
+          const ready = prev[s] + (k > 1 ? XFER : 0);
+          if (trip === null || ready <= trip + r.cum[i]) {
+            const j = lowerBound(deps, ready - r.cum[i]);
+            if (j < deps.length && (trip === null || deps[j] < trip)) { trip = deps[j]; bi = i; }
+          }
+        }
+      }
+    }
+    if (tau[k][to] !== undefined) {
+      const legs = [];
+      let stop = to;
+      for (let kk = k; kk > 0; kk--) {
+        const p = par[kk][stop];
+        legs.unshift({r: p.r, trip: p.trip, bi: p.bi, ai: p.ai});
+        stop = p.r.stops[p.bi];
+      }
+      options.push({legs, arr: tau[k][to]});
+    }
+  }
+  return options;
+}
+// Retarde chaque tronçon au maximum sans rater le suivant : moins d'attente en correspondance.
+function compress(opt, dt) {
+  const L = opt.legs;
+  for (let i = L.length - 2; i >= 0; i--) {
+    const next = L[i + 1], limit = next.trip + next.r.cum[next.bi] - XFER;
+    const deps = depsOf(L[i].r, dt);
+    const j = lowerBound(deps, limit - L[i].r.cum[L[i].ai] + 1) - 1;
+    if (j >= 0 && deps[j] > L[i].trip) L[i].trip = deps[j];
+  }
+  return opt;
+}
+function toJourney(opt) {
+  const legs = opt.legs.map(l => ({
+    line: l.r.line, head: l.r.head,
+    from: l.r.stops[l.bi], to: l.r.stops[l.ai],
+    dep: l.trip + l.r.cum[l.bi], arr: l.trip + l.r.cum[l.ai],
+    stops: l.r.stops.slice(l.bi, l.ai + 1)
+  }));
+  return {legs, dep: legs[0].dep, arr: legs[legs.length - 1].arr};
+}
+function pick(options, maxArr) {
+  if (!options.length) return null;
+  const ok = maxArr === undefined ? options : options.filter(o => o.arr <= maxArr);
+  if (!ok.length) return null;
+  const fastest = ok[ok.length - 1];
+  for (const o of ok) {          // du moins de correspondances au plus rapide
+    const saved = fastest.legs.length - o.legs.length;
+    if (maxArr !== undefined || o.arr <= fastest.arr + 5 * saved) return o;
+  }
+  return fastest;
+}
+function journeyFrom(from, to, min, dt) {
+  const one = t => { const o = pick(raptor(from, to, t, dt)); return o ? toJourney(compress(o, dt)) : null; };
+  let j = one(min);
+  for (let i = 0; j && i < 12; i++) {       // partir plus tard si l'on arrive à la même heure
+    const nj = one(j.dep + 1);
+    if (nj && nj.arr <= j.arr && nj.legs.length <= j.legs.length) j = nj; else break;
+  }
+  return j;
+}
+function plan(from, to, when, arriveBy) {
+  const dt = dayType(when.date);
+  if (arriveBy) {
+    const fastestArr = t => { const o = raptor(from, to, t, dt); return o.length ? o[o.length - 1].arr : Infinity; };
+    let lo = Math.max(DAY_START, when.min - 240), hi = when.min;
+    if (fastestArr(lo) <= when.min) {
+      while (lo < hi) { const m = (lo + hi + 1) >> 1; if (fastestArr(m) <= when.min) lo = m; else hi = m - 1; }
+      const o = pick(raptor(from, to, lo, dt), when.min);
+      return {journey: toJourney(compress(o, dt)), when, mode: 'arrive'};
+    }
+    const j = journeyFrom(from, to, DAY_START, dt);
+    if (j) return {journey: j, when, mode: 'tooEarly'};
+  }
+  let j = journeyFrom(from, to, when.min, dt);
+  if (j) return {journey: j, when, mode: 'depart'};
+  for (let d = 1; d <= 3; d++) {
+    const w = {date: addDays(when.date, d), min: DAY_START};
+    j = journeyFrom(from, to, DAY_START, dayType(w.date));
+    if (j) return {journey: j, when: w, mode: 'rolled'};
+  }
+  return {journey: null, when, mode: 'none'};
+}
+
+/* ---------------- Compréhension de la question ---------------- */
+const STOPWORDS = new Set(('devant depuis direction horaire horaires prochain prochains prochaine passage passages trajet trajets ' +
+  'ticket tickets billet billets tarifs combien comment bonjour bonsoir demain samedi dimanche lundi mardi mercredi jeudi vendredi ' +
+  'station stations arrets lignes dernier derniere premier premiere partir arriver retour suivant abonnement voudrais rendre quelles ' +
+  'quelle marche centre mettre minutes merci aller heures heure avant apres pendant maintenant correspondance voyage voyages').split(' '));
+
+function lev(a, b) {
+  const m = a.length, n = b.length;
+  if (Math.abs(m - n) > 2) return 9;
+  let prev = Array.from({length: n + 1}, (_, i) => i);
+  for (let i = 1; i <= m; i++) {
+    const cur = [i];
+    for (let j = 1; j <= n; j++) cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+    prev = cur;
+  }
+  return prev[n];
+}
+
+function findStops(s) {
+  let work = s;
+  const found = [];
+  for (const [a, id] of ALIASES) {
+    const needle = ' ' + a + ' ';
+    let i;
+    while ((i = work.indexOf(needle)) !== -1) {
+      found.push({id, start: i + 1});
+      work = work.slice(0, i + 1) + '#'.repeat(a.length) + work.slice(i + 1 + a.length);
+    }
+  }
+  // tolérance aux fautes de frappe
+  const toks = [];
+  work.replace(/[^ ]+/g, (t, i) => { toks.push({t, i, used: t[0] === '#'}); return t; });
+  for (let n = 3; n >= 1; n--) {
+    for (let k = 0; k + n <= toks.length; k++) {
+      const win = toks.slice(k, k + n);
+      if (win.some(w => w.used)) continue;
+      const str = win.map(w => w.t).join(' ');
+      if (str.length < 6 || (n === 1 && STOPWORDS.has(str))) continue;
+      const max = str.length < 9 ? 1 : 2;
+      let bestD = max + 1, bestId = null;
+      for (const [a, id] of ALIASES) {
+        if (a.length < 5) continue;
+        const d = lev(str, a);
+        if (d < bestD) { bestD = d; bestId = id; }
+      }
+      if (bestId) {
+        found.push({id: bestId, start: win[0].i});
+        win.forEach(w => { w.used = true; });
+        work = work.slice(0, win[0].i) + '#'.repeat(str.length) + work.slice(win[0].i + str.length);
+      }
+    }
+  }
+  found.sort((a, b) => a.start - b.start);
+  const seen = new Set(), out = [];
+  for (const f of found) {
+    if (seen.has(f.id)) continue;
+    seen.add(f.id);
+    const before = work.slice(0, f.start).trim().split(' ').filter(Boolean);
+    while (before.length && /^(le|la|les|l|arret|station|#+)$/.test(before[before.length - 1])) before.pop();
+    const last = before[before.length - 1] || '', prev = before[before.length - 2] || '';
+    let role = null;
+    if (/^(de|du|des|d|depuis)$/.test(last)) role = 'o';
+    else if (/^(a|au|aux|devant)$/.test(last) && /^(suis|trouve)$/.test(prev)) role = 'o';
+    else if (/^(vers|jusqu|pour|direction|rejoindre|destination)$/.test(last)) role = 'D';
+    else if (/^(a|au|aux|aller)$/.test(last)) role = 'd';
+    out.push({id: f.id, role});
+  }
+  return out;
+}
+
+function parseTime(n, now) {
+  let rest = n, hm = null, rel = null, dayOff = null, part = null, arriveBy = false, m;
+  const cut = str => { rest = rest.replace(str, ' '); };
+  if ((m = rest.match(/ dans (\d{1,3}) ?(minutes?|min|mn|heures?|h)(?= )/))) { rel = +m[1] * (/^h/.test(m[2]) ? 60 : 1); cut(m[0]); }
+  else if ((m = rest.match(/ dans (une heure|une demi heure|un quart d heure)(?= )/))) { rel = m[1] === 'une heure' ? 60 : m[1] === 'une demi heure' ? 30 : 15; cut(m[0]); }
+  else if ((m = rest.match(/ (maintenant|tout de suite|la tout de suite)(?= )/))) { rel = 0; cut(m[0]); }
+
+  if ((m = rest.match(/ apres demain(?= )/))) { dayOff = 2; cut(m[0]); }
+  else if ((m = rest.match(/ demain(?= )/))) { dayOff = 1; cut(m[0]); }
+  else if ((m = rest.match(/ aujourd hui(?= )/))) { dayOff = 0; cut(m[0]); }
+  else if ((m = rest.match(/ (dimanche|lundi|mardi|mercredi|jeudi|vendredi|samedi)(?: prochain)?(?= )/))) {
+    dayOff = (JOURS.indexOf(m[1]) - now.getDay() + 7) % 7; cut(m[0]);
+  }
+  if ((m = rest.match(/ (?:cet |cette |l |de l )?apres midi(?= )/))) { part = 'aprem'; cut(m[0]); }
+  else if ((m = rest.match(/ (?:ce |du |le |au )?soir(?= )/))) { part = 'soir'; cut(m[0]); }
+  else if ((m = rest.match(/ (?:ce |du |le |au )?matin(?= )/))) { part = 'matin'; cut(m[0]); }
+
+  const re = / (\d{1,2}) ?(?:heures?|h|:) ?([0-5]\d)?(?= )/g;
+  let tm = null;
+  while ((m = re.exec(rest))) {
+    const before = rest.slice(0, m.index).trim().split(' ');
+    if (+m[1] > 24 || /^(pass|valable|pendant)$/.test(before[before.length - 1] || '')) continue;
+    tm = m; break;
+  }
+  let ctxWords = '';
+  if (tm) { hm = +tm[1] * 60 + (tm[2] ? +tm[2] : 0); ctxWords = rest.slice(0, tm.index); cut(tm[0]); }
+  else if ((m = rest.match(/ (midi|minuit)(?= )/))) { hm = m[1] === 'midi' ? 720 : 1440; ctxWords = rest.slice(0, m.index); cut(m[0]); }
+
+  if (hm !== null) {
+    // l'heure est-elle une heure de départ ou d'arrivée ? Le dernier indice avant l'heure l'emporte.
+    const words = ctxWords.trim().split(' ').filter(w => !/^(a|vers|les|le)$/.test(w));
+    const near = words[words.length - 1] || '';
+    const lastCue = re => { let i = -1; words.forEach((w, k) => { if (re.test(w)) i = k; }); return i; };
+    if (/^(pour|avant|tard)$/.test(near)) arriveBy = true;
+    else if (/^(des|apres)$/.test(near)) arriveBy = false;
+    else arriveBy = lastCue(/^(arriv\w*|etre|avant)$/) > lastCue(/^(partir|pars|part|partant|depart)$/);
+  }
+  if (hm === null && rel === null && dayOff === null && part === null) return {rest, when: null, arriveBy: false};
+
+  let d;
+  if (rel !== null) d = new Date(now.getTime() + rel * 60000);
+  else {
+    d = new Date(now);
+    if (dayOff) d.setDate(d.getDate() + dayOff);
+    if (hm === null && part) hm = {matin: 480, aprem: 840, soir: 1200}[part];
+    if (hm !== null) {
+      if ((part === 'soir' || part === 'aprem') && hm >= 60 && hm < 720) hm += 720;
+      d.setHours(0, hm, 0, 0);
+      if (dayOff === null && d.getTime() < now.getTime() - 10 * 60000) {
+        if (part && !tm) d = new Date(now); else d.setDate(d.getDate() + 1);
+      }
+    }
+  }
+  return {rest, when: toService(d), arriveBy};
+}
+
+function parseLines(s) {
+  const ids = [];
+  const add = id => { if (!ids.includes(id)) ids.push(id); };
+  let rest = s;
+  rest = rest.replace(/ (?:tramways?|trams?|t) ?([12])(?= )/g, (m, a) => { add('T' + a); return ' '; });
+  rest = rest.replace(/ lignes? ([12])(?= )/g, (m, a) => { add('T' + a); return ' ligne '; });
+  rest = rest.replace(/ (?:bus|lignes?|l) ?(1[0-3])(?= )/g, (m, a) => { add(a); return ' ligne '; });
+  rest = rest.replace(/ (?:le|du|au) (1[0-3])(?= )(?! (?:min|minutes|euros?|ans|trajets?|voyages?|personnes|janvier|fevrier|mars|avril|mai|juin|juillet|aout|septembre|octobre|novembre|decembre))/g,
+    (m, a) => { add(a); return ' ligne '; });
+  if (ids.length) rest = rest.replace(/ et (?:le |la |du )?(?:t ?([12])|(1[0-3]))(?= )/g, (m, a, b) => { add(a ? 'T' + a : b); return ' '; });
+  let mode = null;
+  if (/ (tram|trams|tramway|tramways) /.test(s)) mode = 'tram';
+  else if (/ (bus|autobus) /.test(s)) mode = 'bus';
+  return {ids, rest, mode};
+}
+
+function parse(text, now) {
+  const n = ' ' + norm(text) + ' ';
+  const t = parseTime(n, now);
+  const l = parseLines(t.rest);
+  const stops = findStops(l.rest);
+  const has = re => re.test(n);
+  return {
+    n, empty: n.trim() === '', when: t.when, arriveBy: t.arriveBy,
+    lineIds: l.ids, mode: l.mode, stops,
+    fare: has(/\b(tarifs?|prix|cout\w*|tickets?|billets?|abonnements?|pass|carnets?|gratuit\w*|reductions?|reduit|etudiants?|seniors?|retraites?|payer|paie|acheter|achat|amendes?|fraude|euros?|cher|solidaire|enfants?|scolaires?|jeunes?)\b/) ||
+          has(/ \d{1,3} (trajets?|voyages?|allers? retours?) /) ||
+          (has(/\bcombien\b/) && !has(/combien de (temps|minutes|arrets|stations|lignes)|toutes les combien|combien y a/)),
+    sched: has(/\b(horaires?|prochains?|prochaine|passages?|passe|premiers?|premiere|derniers?|derniere|frequence|quand|quelle heure|toutes les combien|circule\w*|roule\w*)\b/),
+    first: has(/\bpremi/), last: has(/\bderni/),
+    linesI: has(/\b(lignes?|arrets?|stations?|plan|reseau|dessert\w*|terminus|passent|correspondances?)\b/),
+    itin: has(/\b(aller|vais|va|trajet|itineraire|rendre|rends|rejoindre|comment|chemin|partir|pars|arriver|route|combien de temps)\b/),
+    retour: has(/\b(retour|sens inverse|autre sens|inverse)\b/) && !has(/aller.? retour/),
+    next: has(/\b(suivant|suivants|plus tard|celui d apres)\b/),
+    traffic: has(/\b(trafic|perturbations?|greve|retards?|travaux|incidents?|panne)\b/),
+    access: has(/\b(velos?|pmr|fauteuil|poussettes?|chiens?|animaux|animal|accessib\w*|handicap\w*|trottinettes?)\b/),
+    help: has(/\b(aide|help|que peux tu|que sais tu|tu fais quoi|comment ca marche|a quoi tu sers|que pouvez vous)\b/),
+    greet: has(/^ (bonjour|salut|hello|coucou|bonsoir|hey)\b/),
+    thanks: has(/\b(merci|super|parfait|genial)\b/),
+    bye: has(/\b(au revoir|a bientot|bonne journee|bonne soiree|ciao)\b/),
+    cancel: has(/^ (annuler|annule|non|laisse tomber|rien|stop) $/),
+    et: has(/^ et /)
+  };
+}
+
+/* ---------------- Mise en forme ---------------- */
+const NB = ' ';
+const clock = min => { const h = Math.floor(min / 60) % 24, m = min % 60; return h + 'h' + String(m).padStart(2, '0'); };
+const price = v => v.toFixed(2).replace('.', ',') + NB + '€';
+const dur = m => m < 60 ? m + NB + 'min' : Math.floor(m / 60) + NB + 'h' + NB + String(m % 60).padStart(2, '0');
+const plural = (n, s, p) => n + NB + (n > 1 ? (p || s + 's') : s);
+const pastille = L => `<span class="pastille ${L.mode}" style="--c:${L.color};--ct:${L.ink}">${L.id}</span>`;
+const S = id => stopById[id].name;
+function dayLabel(when, now) {
+  const cal = new Date(when.date); cal.setHours(0, when.min, 0, 0); cal.setHours(0, 0, 0, 0);
+  const today = new Date(now); today.setHours(0, 0, 0, 0);
+  const diff = Math.round((cal - today) / 86400000);
+  if (diff === 0) return '';
+  if (diff === 1) return 'demain';
+  return JOURS[when.date.getDay()] + ' ' + when.date.getDate() + ' ' + MOIS[when.date.getMonth()];
+}
+const DAYNAMES = {sem: 'Du lundi au vendredi', sam: 'Samedi', dim: 'Dimanche et jours fériés'};
+const out = (html, chips, map) => ({html, chips: chips || [], map: map || null});
+const le = L => (L.mode === 'tram' ? 'le tram ' : 'le bus ') + L.id;
+// « de » + nom d'arrêt, avec élision et contraction
+function de(id) {
+  const n = S(id);
+  if (/^Les /.test(n)) return 'des ' + n.slice(4);
+  if (/^Le /.test(n)) return 'du ' + n.slice(3);
+  return (/^[AEÉÈIOUHÔ]/i.test(n) ? "d'" : 'de ') + n;
+}
+function a(id) {
+  const n = S(id);
+  if (/^Les /.test(n)) return 'aux ' + n.slice(4);
+  if (/^Le /.test(n)) return 'au ' + n.slice(3);
+  return 'à ' + n;
+}
+
+/* ---------------- Réponses ---------------- */
+function tripReply(from, to, when, arriveBy, now, ctx) {
+  if (from === to) return out(`<p>Le départ et l'arrivée sont le même arrêt, ${S(from)}. Indiquez deux arrêts différents.</p>`);
+  const r = plan(from, to, when, arriveBy);
+  const j = r.journey;
+  if (!j) {
+    ctx.last = null;
+    return out(`<p>Je ne trouve aucun trajet ${de(from)} ${a(to)} dans les trois prochains jours.</p>`, ['Toutes les lignes']);
+  }
+  ctx.last = {type: 'trip', from, to, when: r.when, dep: j.dep, arriveBy: false};
+  const day = dayLabel(r.when, now), dayTxt = day ? ' ' + day : '';
+  const nCorr = j.legs.length - 1;
+  let intro;
+  if (r.mode === 'arrive') intro = `Pour arriver ${a(to)} avant ${clock(when.min)}${dayTxt}, partez ${de(from)} à <strong>${clock(j.dep)}</strong>.`;
+  else if (r.mode === 'tooEarly') intro = `Impossible d'arriver ${a(to)} avant ${clock(when.min)}${dayTxt} : le service n'a pas encore commencé. Voici le premier trajet de la journée.`;
+  else if (r.mode === 'rolled') {
+    const d0 = dayLabel(when, now), dt0 = dayType(when.date);
+    const dead = [from, to].map(id => stopById[id].lines).find(ls => ls.every(l => !lineById[l].svc[dt0]));
+    const why = dead ? ` ${le(lineById[dead[0]]).replace(/^l/, 'L')} ne circule pas ${dt0 === 'dim' ? 'le dimanche' : 'ce jour-là'}.` : '';
+    intro = (d0 === day ? `Le service est terminé pour la nuit.` : `Aucun trajet possible ${d0 || "aujourd'hui"} à partir de ${clock(when.min)}.${why}`) +
+      ` Le premier trajet part ${day ? day + ' ' : ''}à <strong>${clock(j.dep)}</strong>.`;
+  }
+  else intro = `Départ ${de(from)} à <strong>${clock(j.dep)}</strong>${dayTxt}, arrivée ${a(to)} à <strong>${clock(j.arr)}</strong>.`;
+
+  let steps = '';
+  j.legs.forEach((leg, i) => {
+    if (i > 0) steps += `<li class="attendre">Correspondance ${a(leg.from)}, ${dur(leg.dep - j.legs[i - 1].arr)} d'attente</li>`;
+    const n = leg.stops.length - 1;
+    const mid = leg.stops.slice(1, -1);
+    steps += `<li class="etape" style="--c:${leg.line.color}">
+      <time>${clock(leg.dep)}</time><span class="pt"></span><span class="nom">${S(leg.from)}</span>
+      <div class="parcours">${pastille(leg.line)}<span class="dir">direction ${S(leg.head)}</span>
+        ${mid.length ? `<details><summary>${plural(n, 'arrêt')}, ${dur(leg.arr - leg.dep)}</summary><ul>${mid.map(s => `<li>${S(s)}</li>`).join('')}</ul></details>`
+                     : `<div>${plural(n, 'arrêt')}, ${dur(leg.arr - leg.dep)}</div>`}
+      </div>
+      <time>${clock(leg.arr)}</time><span class="pt"></span><span class="nom">${S(leg.to)}</span>
+    </li>`;
+  });
+
+  // départs suivants le même jour
+  const nexts = [];
+  let t = j.dep + 1;
+  const dt = dayType(r.when.date);
+  for (let i = 0; i < 2; i++) {
+    const nj = journeyFrom(from, to, t, dt);
+    if (!nj) break;
+    nexts.push(`${clock(nj.dep)} (arrivée ${clock(nj.arr)})`);
+    t = nj.dep + 1;
+  }
+  const total = j.arr - j.dep;
+  const tarif = total <= 60
+    ? `Un ticket à ${price(fare('unite').prix)} suffit${nCorr ? ' : les correspondances sont incluses pendant 1' + NB + 'h' : ''}.`
+    : `Le trajet dépasse 1${NB}h : prévoyez deux tickets (${price(2 * fare('unite').prix)}) ou un Pass 24${NB}h (${price(fare('p24').prix)}).`;
+
+  const html = `<p>${intro}</p>
+  <article class="carte">
+    <h3>${S(from)} vers ${S(to)}</h3>
+    <div class="resume"><span class="heures">${clock(j.dep)} – ${clock(j.arr)}</span><span class="duree">${dur(total)}</span>
+      <span class="corr">${nCorr ? plural(nCorr, 'correspondance') : 'direct'}</span></div>
+    <ol class="etapes">${steps}</ol>
+    <div class="suite"><p>${tarif}</p>${nexts.length ? `<p>Départs suivants : ${nexts.join(', ')}.</p>` : `<p>C'est le dernier trajet de la journée.</p>`}</div>
+  </article>`;
+  return out(html, nexts.length ? ['Trajet retour', 'Départ suivant', 'Tarifs'] : ['Trajet retour', 'Tarifs'],
+    {type: 'route', from, to, legs: j.legs.map(l => ({line: l.line.id, stops: l.stops}))});
+}
+
+function boardReply(stopId, when, isNow, o, now, ctx) {
+  const dt = dayType(when.date), stop = stopById[stopId];
+  const build = filtered => {
+    const rows = [];
+    for (const r of ROUTES) {
+      const i = r.idx[stopId];
+      if (i === undefined || i === r.stops.length - 1) continue;
+      if (filtered) {
+        if (o.lineIds && o.lineIds.length && !o.lineIds.includes(r.line.id)) continue;
+        if (o.mode && !(o.lineIds && o.lineIds.length) && r.line.mode !== o.mode) continue;
+        if (o.toward && !(r.idx[o.toward] > i)) continue;
+      }
+      const times = depsOf(r, dt).map(d => d + r.cum[i]);
+      rows.push({r, times, next: times.filter(t => t >= when.min).slice(0, 3)});
+    }
+    return rows;
+  };
+  let rows = build(true), pre = '';
+  if (!rows.length) {
+    if (o.toward) return null;                       // pas de ligne directe : l'appelant calcule un itinéraire
+    const what = o.lineIds && o.lineIds.length ? o.lineIds.map(id => le(lineById[id])).join(' et ') : (o.mode === 'tram' ? 'le tram' : 'le bus');
+    pre = `<p>${what.charAt(0).toUpperCase() + what.slice(1)} ne passe pas à ${stop.name}. Voici les lignes qui desservent cet arrêt.</p>`;
+    rows = build(false);
+  }
+  ctx.last = {type: 'board', stop: stopId, o, when};
+  const day = dayLabel(when, now);
+  const fl = o.first || o.last;
+  const items = rows.map(({r, times, next}) => {
+    let right;
+    if (!times.length) right = `<span class="vide">Ne circule pas ${dt === 'dim' ? 'le dimanche' : 'ce jour-là'}</span>`;
+    else if (fl) right = `<span class="fl"><small>premier</small>${clock(times[0])}</span><span class="fl"><small>dernier</small>${clock(times[times.length - 1])}</span>`;
+    else if (!next.length) right = `<span class="vide">Service terminé, dernier passage à ${clock(times[times.length - 1])}</span>`;
+    else right = next.map(t => {
+      const d = t - when.min;
+      return `<span>${isNow && d < 60 ? (d < 1 ? 'à quai' : d + NB + 'min') : clock(t)}</span>`;
+    }).join('');
+    return `<li>${pastille(r.line)}<span class="vers">${S(r.head)}</span><span class="temps">${right}</span></li>`;
+  }).join('');
+  const sub = fl ? `Premier et dernier passage${day ? ', ' + day : ", aujourd'hui"}`
+    : (isNow ? `Prochains passages, il est ${clock(when.min)}` : `Passages à partir de ${clock(when.min)}${day ? ', ' + day : ''}`);
+  const html = `${pre}<article class="carte afficheur">
+    <h3>${stop.name}</h3><p class="sous">${sub}${o.toward ? `, en direction ${de(o.toward)}` : ''}</p>
+    <ul>${items}</ul></article>`;
+  return out(html, [`Partir ${de(stopId)}`, `Aller ${a(stopId)}`], {type: 'stop', id: stopId});
+}
+
+function svcText(L, dt) {
+  const s = L.svc[dt];
+  if (!s) return 'Ne circule pas';
+  const parts = [];
+  if (dt === 'sem') parts.push(`${headway(s, 480)}${NB}min en pointe`);
+  parts.push(`${headway(s, 780)}${NB}min en journée`);
+  if (s.last > 1300) parts.push(`${headway(s, 1300)}${NB}min en soirée`);
+  return `De ${clock(s.first)} à ${clock(s.last)}, toutes les ${parts.join(', ')}`;
+}
+function lineReply(ids, now, ctx, when) {
+  const today = dayType(toService(now).date);
+  let pre = '';
+  if (when) {
+    const dt = dayType(when.date), day = dayLabel(when, now) || "aujourd'hui";
+    pre = '<p>' + ids.map(id => {
+      const L = lineById[id], s = L.svc[dt], nom = le(L).replace(/^l/, 'L');
+      return s ? `${nom} circule ${day}, de ${clock(s.first)} à ${clock(s.last)}.` : `${nom} ne circule pas ${day}.`;
+    }).join(' ') + '</p>';
+  }
+  const html = pre + ids.map(id => {
+    const L = lineById[id];
+    const stops = L.stops.map((s, i) => {
+      const others = stopById[s].lines.filter(x => x !== id).map(x => pastille(lineById[x])).join(' ');
+      return `<li class="${i === 0 || i === L.stops.length - 1 ? 'bout' : ''}">${S(s)} ${others}</li>`;
+    }).join('');
+    const svc = ['sem', 'sam', 'dim'].map(dt => `<div class="${dt === today ? 'jour' : ''}"><dt>${DAYNAMES[dt]}</dt><dd>${svcText(L, dt)}</dd></div>`).join('');
+    return `<article class="carte" style="border-top-color:${L.color}">
+      <div class="fiche-tete">${pastille(L)}<div><h3>${S(L.stops[0])} – ${S(L.stops[L.stops.length - 1])}</h3>
+      <p class="sous">${L.mode === 'tram' ? 'Tramway' : 'Bus'}, ${L.stops.length} arrêts, ${L.total}${NB}min de bout en bout</p></div></div>
+      <ol class="thermo" style="--c:${L.color}">${stops}</ol>
+      <dl class="services">${svc}</dl>
+      <p class="note">Heures de départ aux terminus. Les pastilles indiquent les correspondances.</p>
+    </article>`;
+  }).join('');
+  const L0 = lineById[ids[0]];
+  const hub = L0.stops.slice().sort((x, y) => stopById[y].lines.length - stopById[x].lines.length)[0];
+  ctx.last = {type: 'line', id: ids[0]};
+  return out(html, [`Prochains passages ${a(hub)}`, 'Toutes les lignes'], {type: 'lines', ids});
+}
+function networkReply(mode) {
+  const list = LINES.filter(L => !mode || L.mode === mode);
+  const html = `<p>Le réseau Clairval compte ${mode === 'bus' ? '' : '2 lignes de tram'}${mode ? '' : ' et '}${mode === 'tram' ? '' : '4 lignes de bus'}${mode ? '' : ', pour 35 arrêts'}. Le service va d'environ 5${NB}h à 0${NB}h${NB}30 pour les trams, et jusqu'à 22${NB}h${NB}30 pour les bus.</p>
+  <article class="carte"><ul class="reseau">${list.map(L => `<li>${pastille(L)}<span><b>${S(L.stops[0])} – ${S(L.stops[L.stops.length - 1])}</b>
+    <small>${L.stops.length} arrêts, ${L.total}${NB}min${L.svc.dim ? '' : ', ne circule pas le dimanche'}</small></span></li>`).join('')}</ul></article>`;
+  return out(html, list.map(L => 'Ligne ' + L.id), {type: 'lines', ids: list.map(L => L.id)});
+}
+
+function fareTable(ids) {
+  let g = '', rows = '';
+  FARES.filter(f => !ids || ids.includes(f.id)).forEach(f => {
+    if (!ids && f.g !== g) { g = f.g; rows += `<tr class="groupe"><th colspan="2">${g}</th></tr>`; }
+    rows += `<tr><th>${f.nom}${f.info ? `<small>${f.info}</small>` : ''}</th><td>${price(f.prix)}</td></tr>`;
+  });
+  return `<article class="carte"><table class="tarifs">${rows}</table></article>`;
+}
+function fareReply(p) {
+  const n = p.n, has = re => re.test(n);
+  const u = fare('unite').prix, c = fare('carnet').prix;
+  const cnt = n.match(/ (\d{1,3}) (trajets?|voyages?|allers? retours?|aller retour)/);
+  if (cnt) {
+    let k = +cnt[1] * (/retour/.test(cnt[2]) ? 2 : 1);
+    const carnets = q => Math.floor(q / 10) * c + Math.min((q % 10) * u, c);
+    if (has(/par mois|par semaine|chaque mois|chaque semaine|mensuel/)) {
+      if (has(/semaine/)) k = Math.round(k * 4.33);
+      const t = carnets(k), abo = fare('mois').prix;
+      return out(`<p>Pour environ ${k} voyages par mois : ${price(t)} en carnets et tickets, contre ${price(abo)} pour l'abonnement mensuel.
+        <strong>${t > abo ? "L'abonnement mensuel est plus avantageux" : 'Les carnets de 10 voyages restent plus avantageux'}</strong>.</p>
+        <p>Avec le tarif moins de 26 ans, l'abonnement mensuel est à ${price(fare('mois26').prix)}.</p>`, ['Tous les tarifs']);
+    }
+    if (has(/par jour|aujourd hui|journee|chaque jour|tous les jours/)) {
+      const t = k * u, p24 = fare('p24').prix;
+      let html = `<p>Pour ${k} voyages dans la journée : ${price(t)} en tickets à l'unité, contre ${price(p24)} pour le Pass 24${NB}h.
+        <strong>${t > p24 ? 'Le Pass 24' + NB + 'h est plus avantageux' : "Les tickets à l'unité suffisent"}</strong>.</p>`;
+      if (has(/par jour|chaque jour|tous les jours/)) html += `<p>Si c'est tous les jours travaillés (environ ${k * 21} voyages par mois), l'abonnement mensuel à ${price(fare('mois').prix)} revient bien moins cher.</p>`;
+      return out(html, ['Tous les tarifs']);
+    }
+    return out(`<p>${k} voyages coûtent ${price(k * u)} en tickets à l'unité${k >= 9 ? `, ou <strong>${price(carnets(k))}</strong> avec des carnets de 10 (${price(c)} le carnet)` : ''}.
+      Chaque ticket est valable 1${NB}h, correspondances incluses.</p>`, ['Tous les tarifs']);
+  }
+  if (has(/\b(amendes?|fraude|controle\w*|sans ticket|sans billet)\b/))
+    return out(`<p>Voyager sans titre validé expose à une amende de 60${NB}€. Le ticket se valide à chaque montée, y compris en correspondance.</p>`, ['Tous les tarifs']);
+  if (has(/\b(ou|comment|acheter|achat|payer|paie|distributeurs?)\b/) && has(/\b(acheter|achat|payer|paie|distributeurs?|trouver|recharger)\b/))
+    return out(`<p>Vous pouvez acheter vos titres :</p>
+      <p>aux distributeurs des stations de tram (carte bancaire et espèces) ;<br>à bord des bus, par carte sans contact, au tarif de ${price(fare('bord').prix)} le ticket ;<br>à l'agence de la Gare Centrale, du lundi au samedi de 7${NB}h${NB}30 à 19${NB}h.</p>
+      <p>Les abonnements se chargent sur une carte nominative, délivrée à l'agence.</p>`, ['Tous les tarifs']);
+  if (has(/\b(enfants?|gratuit\w*|bebe|moins de 6)\b/))
+    return out(`<p>Le réseau est gratuit pour les enfants de moins de 6 ans accompagnés. De 6 à 25 ans, le tarif moins de 26 ans s'applique aux abonnements ; le ticket à l'unité reste à ${price(u)}.</p>` +
+      fareTable(['unite', 'mois26', 'an26']), ['Tous les tarifs']);
+  if (has(/\b(etudiants?|jeunes?|scolaires?|apprentis?|26)\b/))
+    return out(`<p>Avec le tarif moins de 26 ans, l'abonnement mensuel passe de ${price(fare('mois').prix)} à <strong>${price(fare('mois26').prix)}</strong>. Il n'y a pas de réduction sur les tickets à l'unité.</p>` +
+      fareTable(['mois26', 'an26', 'carnet']), ['Tous les tarifs', 'Où acheter un ticket ?']);
+  if (has(/\b(seniors?|retraites?|65)\b/))
+    return out(`<p>À partir de 65 ans, l'abonnement mensuel est à <strong>${price(fare('mois65').prix)}</strong> au lieu de ${price(fare('mois').prix)}.</p>` + fareTable(['mois65', 'carnet']), ['Tous les tarifs']);
+  if (has(/\b(solidaire|chomage|rsa|demandeurs?)\b/))
+    return out(`<p>L'abonnement solidaire coûte <strong>${price(fare('sol').prix)} par mois</strong>, sous conditions de ressources. Le dossier se dépose à l'agence de la Gare Centrale.</p>`, ['Tous les tarifs']);
+  if (has(/\b(abonnements?|mensuel|annuel|mois|annee)\b/))
+    return out(`<p>L'abonnement tout public coûte ${price(fare('mois').prix)} par mois ou ${price(fare('an').prix)} par an. Il devient rentable à partir de 30 voyages par mois environ.</p>` +
+      fareTable(['mois', 'mois26', 'mois65', 'an', 'an26', 'sol']), ['Tous les tarifs']);
+  if (has(/\b(soiree|soir|nuit)\b/))
+    return out(`<p>Le ticket soirée coûte <strong>${price(fare('soir').prix)}</strong> : voyages illimités de 19${NB}h à la fin du service, sur tout le réseau.</p>`, ['Tous les tarifs']);
+  if (has(/\b(pass|journee|24|72|touriste|week end)\b/))
+    return out(`<p>Pour voyager sans compter : le Pass 24${NB}h à ${price(fare('p24').prix)} est rentable dès le troisième voyage de la journée.</p>` + fareTable(['p24', 'p72', 'soir']), ['Tous les tarifs']);
+  if (p.stops.length >= 2) {
+    const [o, d] = roles(p.stops);
+    return out(`<p>Le prix ne dépend pas de la distance : ${de(o)} ${a(d)}, un ticket à <strong>${price(u)}</strong> suffit, correspondances incluses pendant 1${NB}h.</p>`,
+      [`${S(o)} vers ${S(d)}`, 'Tous les tarifs']);
+  }
+  if (has(/\b(tickets?|billets?|unite|un trajet|un voyage|carnets?)\b/) && !has(/\b(tous|tarifs|liste)\b/))
+    return out(`<p>Le ticket coûte <strong>${price(u)}</strong>. Il est valable 1${NB}h sur tout le réseau, correspondances bus et tram incluses. Acheté à bord d'un bus, il coûte ${price(fare('bord').prix)}.</p>` +
+      fareTable(['unite', 'bord', 'carnet', 'p24']), ['Tous les tarifs', 'Où acheter un ticket ?']);
+  return out(`<p>Le tarif est le même sur tout le réseau, quelle que soit la distance. Gratuit pour les moins de 6 ans.</p>` + fareTable(null),
+    ['Où acheter un ticket ?', 'Tarif moins de 26 ans']);
+}
+
+// Départ et arrivée parmi deux arrêts cités : « de » marque le départ, « vers » l'arrivée, sinon l'ordre de la phrase.
+function roles(stops) {
+  const rank = s => ({o: 0, d: 2, D: 3})[s.role] || 1;
+  const [x, y] = stops;
+  return rank(y) < rank(x) ? [y.id, x.id] : [x.id, y.id];
+}
+
+const EXAMPLES = ['De Campus Sciences à Vieux Port', 'Prochains passages à Gare Centrale', 'Toutes les lignes', 'Combien coûte un ticket ?'];
+
+function respond(text, now, ctx) {
+  const p = parse(text, now);
+  if (p.empty) return out('<p>Écrivez votre question, par exemple un trajet entre deux arrêts.</p>', EXAMPLES);
+  const nowS = toService(now);
+  const when = p.when || nowS;
+  const isNow = !p.when;
+
+  // Réponse à une question que je viens de poser (arrêt de départ ou d'arrivée manquant)
+  if (ctx.pending) {
+    const pend = ctx.pending, known = pend.from || pend.to;
+    if (p.cancel) { ctx.pending = null; return out("<p>D'accord, j'annule ce trajet.</p>", EXAMPLES); }
+    const cand = p.stops.map(s => s.id).filter(id => id !== known);
+    if (p.stops.length === 1 && !cand.length && !p.fare && !p.sched)
+      return out(`<p>C'est le même arrêt que ${pend.from ? 'le départ' : "l'arrivée"}. ${pend.from ? 'Où allez-vous ?' : "D'où partez-vous ?"}</p>`);
+    if (p.stops.length === 1 && cand.length && !p.fare && !p.sched && !p.lineIds.length) {
+      ctx.pending = null;
+      return tripReply(pend.from || cand[0], pend.to || cand[0], p.when || pend.when || nowS, p.when ? p.arriveBy : pend.arriveBy, now, ctx);
+    }
+    if (!p.stops.length && !p.fare && !p.sched && !p.linesI && !p.lineIds.length && !p.help && !p.thanks && !p.bye)
+      return out(`<p>Je ne reconnais pas cet arrêt. Écrivez son nom tel qu'il figure sur le plan, ou touchez-le directement. Pour abandonner, écrivez « annuler ».</p>`);
+    ctx.pending = null;
+  }
+
+  if (p.retour && ctx.last && ctx.last.type === 'trip' && p.stops.length < 2)
+    return tripReply(ctx.last.to, ctx.last.from, p.when || nowS, p.arriveBy, now, ctx);
+  if (p.next && ctx.last && ctx.last.type === 'trip' && !p.stops.length)
+    return tripReply(ctx.last.from, ctx.last.to, {date: ctx.last.when.date, min: ctx.last.dep + 1}, false, now, ctx);
+
+  if (p.fare) return fareReply(p);
+  if (p.traffic && p.stops.length < 2)
+    return out(`<p>Je n'ai pas d'information en temps réel sur le trafic : mes réponses s'appuient sur les horaires théoriques du réseau.</p>`, ['Prochains passages à Gare Centrale']);
+  if (p.access && p.stops.length < 2)
+    return out(`<p>Tous les trams et tous les bus sont à plancher bas, avec une rampe à la porte du milieu pour les fauteuils roulants et les poussettes.</p>
+      <p>Les vélos sont admis dans les trams en dehors des heures de pointe (avant 6${NB}h${NB}30, de 9${NB}h${NB}30 à 16${NB}h, après 19${NB}h${NB}30), pas dans les bus. Les trottinettes pliées sont acceptées partout.</p>
+      <p>Les petits animaux voyagent gratuitement dans un sac ou un panier ; les chiens d'assistance sont toujours admis.</p>`);
+
+  if (p.stops.length >= 2) {
+    const [from, to] = roles(p.stops);
+    if (p.sched && !p.itin && !p.arriveBy) {
+      const b = boardReply(from, when, isNow, {lineIds: p.lineIds, mode: p.mode, toward: to, first: p.first, last: p.last}, now, ctx);
+      if (b) return b;
+    }
+    return tripReply(from, to, when, p.arriveBy, now, ctx);
+  }
+
+  if (p.stops.length === 1) {
+    const s = p.stops[0];
+    if (p.et && ctx.last && ctx.last.type === 'trip' && !p.sched && !p.linesI) {
+      const L = ctx.last;
+      return s.role === 'o' ? tripReply(s.id, L.to, p.when || L.when, p.arriveBy, now, ctx)
+                            : tripReply(L.from, s.id, p.when || L.when, p.arriveBy, now, ctx);
+    }
+    if (p.itin && !p.sched && !p.linesI && !p.lineIds.length) {
+      ctx.pending = s.role === 'o' ? {from: s.id} : {to: s.id};
+      ctx.pending.when = p.when; ctx.pending.arriveBy = p.arriveBy;
+      return out(s.role === 'o'
+        ? `<p>Vous partez ${de(s.id)}. Où allez-vous ? Écrivez le nom de l'arrêt ou touchez-le sur le plan.</p>`
+        : `<p>Vous allez ${a(s.id)}. D'où partez-vous ? Écrivez le nom de l'arrêt ou touchez-le sur le plan.</p>`, [], {type: 'stop', id: s.id});
+    }
+    return boardReply(s.id, when, isNow, {lineIds: p.lineIds, mode: p.mode, first: p.first, last: p.last}, now, ctx);
+  }
+
+  if (p.lineIds.length) return lineReply(p.lineIds, now, ctx, p.when);
+  if (p.linesI || (p.mode && !p.sched && !p.itin)) return networkReply(p.mode);
+
+  if ((p.when || p.sched) && ctx.last && !p.itin) {
+    const L = ctx.last;
+    if (L.type === 'trip') return tripReply(L.from, L.to, when, p.arriveBy, now, ctx);
+    if (L.type === 'board') return boardReply(L.stop, when, isNow, Object.assign({}, L.o, {first: p.first, last: p.last}), now, ctx);
+    if (L.type === 'line') return lineReply([L.id], now, ctx);
+  }
+  if (p.sched) return out(`<p>Pour quel arrêt ou quelle ligne ? Par exemple « prochains passages à Hôtel de Ville » ou « horaires du T2 ».</p>`,
+    ['Prochains passages à Gare Centrale', 'Ligne T1', 'Ligne 12']);
+  if (p.help) return out(`<p>Je réponds à quatre types de questions sur le réseau Clairval :</p>
+    <p>un trajet entre deux arrêts, avec une heure de départ ou d'arrivée (« de la gare au stade pour 18h ») ;<br>les lignes et leurs arrêts (« ligne 12 ») ;<br>les horaires (« prochains passages à Théâtre », « dernier tram à Vieux Port ») ;<br>les tarifs (« prix de l'abonnement étudiant », « 4 trajets par jour »).</p>
+    <p>Les arrêts sont aussi cliquables sur le plan.</p>`, EXAMPLES);
+  if (p.itin) return out(`<p>Je ne reconnais pas d'arrêt du réseau dans votre message. Les noms des 35 arrêts figurent sur le plan ; vous pouvez aussi en toucher un pour commencer.</p>`,
+    ['De Campus Sciences à Vieux Port', 'Toutes les lignes']);
+  if (p.greet) return out(`<p>Bonjour. Dites-moi où vous allez, ou posez une question sur les lignes, les horaires ou les tarifs.</p>`, EXAMPLES);
+  if (p.bye) return out(`<p>Bon voyage sur le réseau Clairval.</p>`);
+  if (p.thanks) return out(`<p>Avec plaisir. Autre chose ?</p>`);
+  return out(`<p>Je n'ai pas compris. Je sais calculer un trajet entre deux arrêts, présenter les lignes, donner les horaires et les tarifs.</p>`, EXAMPLES);
+}
+
+const api = {respond, parse, plan, norm, toService, dayType, clock, STOPS: stopById, LINES, ROUTES, EXAMPLES, pastille, depsOf};
+if (typeof module !== 'undefined' && module.exports) module.exports = api;
+else root.Guichet = api;
+})(typeof window !== 'undefined' ? window : globalThis);
+</script>
+
+<!-- =====================================================================
+     INTERFACE : conversation et plan
+     ===================================================================== -->
+<script>
+(function () {
+'use strict';
+const G = window.Guichet;
+const ctx = {};
+const $ = id => document.getElementById(id);
+const app = $('app'), fil = $('fil'), champ = $('champ'), carte = $('carte');
+const SVG = 'http://www.w3.org/2000/svg';
+const el = (tag, attrs, parent) => {
+  const e = document.createElementNS(SVG, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (parent) parent.appendChild(e);
+  return e;
+};
+
+/* ---------- Plan ---------- */
+const LAB = {n:[0,-13,'middle'], s:[0,24,'middle'], e:[13,5,'start'], w:[-13,5,'end'],
+             ne:[10,-10,'start'], nw:[-10,-10,'end'], se:[10,21,'start'], sw:[-10,21,'end'], e2:[13,-2,'start'], ne2:[10,-25,'start']};
+const gLignes = el('g', {}, carte), gTrace = el('g', {}, carte), gArrets = el('g', {}, carte);
+const lineEls = {}, stopEls = {};
+const pts = ids => ids.map(id => G.STOPS[id].x + ',' + G.STOPS[id].y).join(' ');
+G.LINES.slice().reverse().forEach(L => {
+  lineEls[L.id] = el('polyline', {class: 'ligne', points: pts(L.stops), stroke: L.color, 'stroke-width': L.mode === 'tram' ? 8 : 5}, gLignes);
+});
+Object.values(G.STOPS).forEach(s => {
+  const hub = s.lines.length > 1;
+  const g = el('g', {class: 'arret' + (hub ? ' noeud' : ''), tabindex: 0, role: 'button',
+    'aria-label': `${s.name}, ${s.lines.length > 1 ? 'lignes' : 'ligne'} ${s.lines.join(', ')}`}, gArrets);
+  el('circle', {class: 'zone', cx: s.x, cy: s.y, r: 17}, g);
+  el('circle', {class: 'pt', cx: s.x, cy: s.y, r: hub ? 7.5 : 5}, g);
+  const [dx, dy, anchor] = LAB[s.lab], x0 = s.x + dx + (s.id === 'doc' ? 3 : 0);
+  const t = el('text', {x: x0, y: s.y + dy, 'text-anchor': anchor}, g);
+  if (/2$/.test(s.lab)) {                     // nom sur deux lignes
+    const i = s.name.indexOf(' ');
+    el('tspan', {x: x0, dy: 0}, t).textContent = s.name.slice(0, i);
+    el('tspan', {x: x0, dy: 15}, t).textContent = s.name.slice(i + 1);
+  } else t.textContent = s.name;
+  const go = () => { app.classList.remove('plan-ouvert'); send(s.name); };
+  g.addEventListener('click', go);
+  g.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
+  stopEls[s.id] = g;
+});
+G.LINES.forEach(L => {
+  const li = document.createElement('li'), b = document.createElement('button');
+  b.innerHTML = `${G.pastille(L)}<span>${G.STOPS[L.stops[0]].name} – ${G.STOPS[L.stops[L.stops.length - 1]].name}</span>`;
+  b.addEventListener('click', () => { app.classList.remove('plan-ouvert'); send('Ligne ' + L.id); });
+  li.appendChild(b); $('legende').appendChild(li);
+});
+
+function showMap(m) {
+  carte.classList.remove('filtre');
+  gTrace.replaceChildren();
+  Object.values(lineEls).forEach(e => e.classList.remove('on'));
+  Object.values(stopEls).forEach(e => e.classList.remove('on', 'bout'));
+  $('planTout').hidden = !m;
+  if (!m) return;
+  carte.classList.add('filtre');
+  if (m.type === 'route') {
+    m.legs.forEach(leg => {
+      const L = G.LINES.find(x => x.id === leg.line);
+      el('polyline', {class: 'ligne on', points: pts(leg.stops), stroke: L.color, 'stroke-width': L.mode === 'tram' ? 9 : 7}, gTrace);
+      leg.stops.forEach(s => stopEls[s].classList.add('on'));
+    });
+    stopEls[m.from].classList.add('bout'); stopEls[m.to].classList.add('bout');
+  } else if (m.type === 'stop') {
+    const s = G.STOPS[m.id];
+    s.lines.forEach(id => { lineEls[id].classList.add('on'); G.LINES.find(x => x.id === id).stops.forEach(x => stopEls[x].classList.add('on')); });
+    stopEls[m.id].classList.add('bout');
+  } else if (m.type === 'lines') {
+    if (m.ids.length === G.LINES.length) return showMap(null);
+    m.ids.forEach(id => { lineEls[id].classList.add('on'); G.LINES.find(x => x.id === id).stops.forEach(x => stopEls[x].classList.add('on')); });
+  }
+}
+$('planTout').addEventListener('click', () => showMap(null));
+$('planOuvrir').addEventListener('click', () => {
+  app.classList.add('plan-ouvert');
+  // sur petit écran le plan défile : on le centre sur l'arrêt mis en avant, sinon sur la gare
+  const vue = $('planVue'), cible = carte.querySelector('.arret.bout .pt') || stopEls.gar.querySelector('.pt');
+  vue.scrollLeft = (cible.getAttribute('cx') / 950) * vue.scrollWidth - vue.clientWidth / 2;
+});
+$('planFermer').addEventListener('click', () => app.classList.remove('plan-ouvert'));
+document.addEventListener('keydown', e => { if (e.key === 'Escape') app.classList.remove('plan-ouvert'); });
+
+/* ---------- Conversation ---------- */
+function addBot(res) {
+  const d = document.createElement('div');
+  d.className = 'msg bot';
+  d.innerHTML = res.html;
+  if (res.chips.length) {
+    const c = document.createElement('div');
+    c.className = 'chips';
+    res.chips.forEach(txt => {
+      const b = document.createElement('button');
+      b.type = 'button'; b.textContent = txt;
+      b.addEventListener('click', () => send(txt));
+      c.appendChild(b);
+    });
+    d.appendChild(c);
+  }
+  fil.appendChild(d);
+  return d;
+}
+let busy = false;
+function send(text) {
+  text = text.trim();
+  if (!text || busy) return;
+  busy = true;
+  fil.querySelectorAll('.chips').forEach(c => c.remove());
+  const u = document.createElement('div');
+  u.className = 'msg moi';
+  const span = document.createElement('span');
+  span.textContent = text;
+  u.appendChild(span);
+  fil.appendChild(u);
+  const wait = document.createElement('div');
+  wait.className = 'msg bot attente';
+  wait.textContent = 'Je regarde…';
+  fil.appendChild(wait);
+  fil.scrollTop = fil.scrollHeight;
+  setTimeout(() => {
+    let res;
+    try { res = G.respond(text, new Date(), ctx); }
+    catch (err) { console.error(err); res = {html: '<p>Une erreur est survenue en préparant la réponse. Reformulez votre question.</p>', chips: [], map: null}; }
+    wait.remove();
+    addBot(res);
+    if (res.map) showMap(res.map);
+    // montre le début de la réponse si elle est plus haute que l'écran
+    fil.scrollTop = Math.min(u.offsetTop - 12, fil.scrollHeight - fil.clientHeight);
+    busy = false;
+  }, 240);
+}
+$('saisie').addEventListener('submit', e => {
+  e.preventDefault();
+  const v = champ.value;
+  champ.value = '';
+  send(v);
+});
+
+function tick() {
+  const d = new Date();
+  const j = d.toLocaleDateString('fr-FR', {weekday: 'long', day: 'numeric', month: 'long'});
+  $('horloge').innerHTML = `<b>${d.getHours()}h${String(d.getMinutes()).padStart(2, '0')}</b>${j}`;
+}
+tick(); setInterval(tick, 15000);
+
+addBot({
+  html: `<p>Bonjour. Je renseigne sur le réseau Clairval, un réseau fictif de 2 lignes de tram et 4 lignes de bus : trajets d'un arrêt à un autre, lignes, horaires et tarifs.</p>
+         <p>Écrivez comme vous le diriez au guichet, ou touchez un arrêt sur le plan.</p>`,
+  chips: G.EXAMPLES
+});
+if (window.matchMedia('(min-width: 881px)').matches) champ.focus();
+window.__send = send;
+})();
+</script>
+</body>
+</html>

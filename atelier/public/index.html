@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Cap Web — assistant bus et tram</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <header>
+    <h1>Cap Web</h1>
+    <p>Assistant pour les voyageurs d’un réseau de bus et de tram : trajets, lignes, horaires, tarifs.</p>
+  </header>
+  <main>
+    <section aria-labelledby="titre-discussion">
+      <h2 id="titre-discussion">Discussion</h2>
+      <ul id="messages" aria-label="Messages"></ul>
+      <form id="chat-form">
+        <label for="message">Votre message (280 caractères maximum)</label>
+        <textarea id="message" name="message" rows="3" maxlength="280" required></textarea>
+        <button type="submit">Envoyer</button>
+      </form>
+      <ul id="suggestions">
+        <li><button type="button">Comment aller de la gare à l’université ?</button></li>
+        <li><button type="button">Combien coûte un ticket ?</button></li>
+        <li><button type="button">À quelle heure passe le dernier tram ?</button></li>
+      </ul>
+      <button type="button" id="effacer">Effacer la conversation</button>
+      <p id="status" role="status"></p>
+    </section>
+  </main>
+  <footer>
+    <p>Atelier Cap Web, jour 1. <span id="version">version J1</span></p>
+  </footer>
+  <script type="module" src="./js/app.js"></script>
+</body>
+</html>

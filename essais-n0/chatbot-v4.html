@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Assistant Bus et Tram</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 16px;
+      font-family: Verdana, Geneva, sans-serif;
+      background: #f1f5f4;
+      color: #1c2b2a;
+    }
+    .cadre {
+      max-width: 640px;
+      margin: 0 auto;
+      background: #ffffff;
+      border: 1px solid #c9d6d3;
+      border-radius: 10px;
+    }
+    header {
+      background: #0f766e;
+      color: #ffffff;
+      padding: 14px 16px;
+      border-radius: 10px 10px 0 0;
+    }
+    header h1 { margin: 0; font-size: 1.25rem; }
+    header p { margin: 6px 0 0; font-size: 0.85rem; }
+    #conversation {
+      height: 420px;
+      overflow-y: auto;
+      padding: 14px;
+    }
+    .bulle {
+      width: fit-content;
+      max-width: 85%;
+      margin: 0 0 10px;
+      padding: 9px 12px;
+      border-radius: 10px;
+      line-height: 1.45;
+      white-space: pre-line;
+      overflow-wrap: anywhere;
+    }
+    .assistant { background: #e2efec; }
+    .voyageur { background: #0f766e; color: #ffffff; margin-left: auto; }
+    form {
+      display: flex;
+      gap: 8px;
+      padding: 12px;
+      border-top: 1px solid #c9d6d3;
+    }
+    #question {
+      flex: 1;
+      min-width: 0;
+      padding: 10px;
+      font-size: 1rem;
+      border: 1px solid #8fa6a2;
+      border-radius: 6px;
+    }
+    button {
+      padding: 10px 14px;
+      font-size: 1rem;
+      color: #ffffff;
+      background: #0f766e;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    button:hover { background: #0b5a54; }
+    #effacer { background: #9f1239; }
+    #effacer:hover { background: #7c0e2c; }
+    #erreur {
+      margin: 0;
+      padding: 0 12px 12px;
+      min-height: 1.2em;
+      font-size: 0.9rem;
+      color: #9f1239;
+    }
+  </style>
+</head>
+<body>
+  <div class="cadre">
+    <header>
+      <h1>Assistant Bus et Tram</h1>
+      <p>Trajets, lignes, horaires et tarifs d'un réseau fictif d'exemple.</p>
+    </header>
+    <div id="conversation"></div>
+    <form id="formulaire">
+      <input type="text" id="question" aria-label="Votre question" placeholder="Ex. : de la gare au stade" autocomplete="off">
+      <button type="submit">Envoyer</button>
+      <button type="button" id="effacer">Effacer</button>
+    </form>
+    <p id="erreur" role="alert"></p>
+  </div>
+
+  <script>
+    // ----- Les données du réseau (inventées pour l'exemple) -----
+    const lignes = [
+      { nom: 'Tram A', arrets: ['Gare Centrale', 'Hôtel de Ville', 'Université', 'Stade', 'Parc des Expositions'] },
+      { nom: 'Tram B', arrets: ['Aéroport', 'Gare Centrale', 'Marché', 'Hôpital', 'Lac'] },
+      { nom: 'Bus 1', arrets: ['Hôtel de Ville', 'Marché', 'Musée', 'Piscine', 'Zoo'] },
+      { nom: 'Bus 2', arrets: ['Université', 'Bibliothèque', 'Hôpital', 'Lycée', 'Zone Commerciale'] }
+    ];
+
+    // Les mots qui permettent de reconnaître chaque arrêt dans une question.
+    const motsDesArrets = {
+      'Gare Centrale': ['gare'],
+      'Hôtel de Ville': ['hotel de ville', 'mairie'],
+      'Université': ['universite'],
+      'Stade': ['stade'],
+      'Parc des Expositions': ['parc des expositions', 'expositions'],
+      'Aéroport': ['aeroport'],
+      'Marché': ['marche'],
+      'Hôpital': ['hopital'],
+      'Lac': ['lac'],
+      'Musée': ['musee'],
+      'Piscine': ['piscine'],
+      'Zoo': ['zoo'],
+      'Bibliothèque': ['bibliotheque'],
+      'Lycée': ['lycee'],
+      'Zone Commerciale': ['zone commerciale', 'centre commercial']
+    };
+
+    const MINUTES_PAR_ARRET = 3;
+
+    const reponses = [
+      {
+        mots: ['bonjour', 'salut', 'bonsoir', 'coucou'],
+        texte: "Bonjour ! Dites-moi d'où vous partez et où vous allez, par exemple : « de la gare au stade »."
+      },
+      {
+        mots: ['horaire', 'horaires', 'heure', 'heures', 'premier', 'dernier', 'frequence'],
+        texte: "Horaires :\n- Trams : de 5 h 30 à 0 h 30, un tram toutes les 8 minutes en journée.\n- Bus : de 6 h à 22 h, un bus toutes les 15 minutes."
+      },
+      {
+        mots: ['tarif', 'tarifs', 'prix', 'ticket', 'tickets', 'billet', 'coute', 'abonnement'],
+        texte: "Tarifs :\n- Ticket à l'unité : 1,60 €, valable 1 heure avec correspondances.\n- Carnet de 10 tickets : 13 €.\n- Abonnement mensuel : 40 €."
+      },
+      {
+        mots: ['ligne', 'lignes', 'plan', 'reseau', 'arret', 'arrets'],
+        texte: null // construit à partir du tableau des lignes
+      },
+      {
+        mots: ['correspondance', 'correspondances', 'changer', 'changement'],
+        texte: "Correspondances possibles :\n- Gare Centrale : Tram A et Tram B\n- Hôtel de Ville : Tram A et Bus 1\n- Université : Tram A et Bus 2\n- Marché : Tram B et Bus 1\n- Hôpital : Tram B et Bus 2"
+      },
+      {
+        mots: ['merci'],
+        texte: "Avec plaisir, bon voyage !"
+      },
+      {
+        mots: ['aide'],
+        texte: "Je peux vous donner un trajet entre deux arrêts, la liste des lignes, les horaires, les tarifs et les correspondances."
+      }
+    ];
+
+    const conversation = document.getElementById('conversation');
+    const formulaire = document.getElementById('formulaire');
+    const champ = document.getElementById('question');
+    const boutonEffacer = document.getElementById('effacer');
+    const erreur = document.getElementById('erreur');
+    const ACCUEIL = "Bonjour ! Je suis l'assistant du réseau Bus et Tram. D'où partez-vous et où allez-vous ?";
+
+    // Met le texte en minuscules et enlève les accents, pour comparer plus facilement.
+    function simplifier(texte) {
+      return texte.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+    }
+
+    // Vrai si le mot apparaît en entier dans le texte (pas au milieu d'un autre mot).
+    function contientMot(texte, mot) {
+      return new RegExp('\\b' + mot + '\\b').test(texte);
+    }
+
+    // Renvoie les arrêts cités dans la question, dans l'ordre où ils apparaissent.
+    function trouverArrets(texte) {
+      const trouves = [];
+      for (const arret in motsDesArrets) {
+        for (const mot of motsDesArrets[arret]) {
+          const position = texte.search(new RegExp('\\b' + mot + '\\b'));
+          if (position !== -1) {
+            trouves.push({ arret: arret, position: position });
+            break;
+          }
+        }
+      }
+      trouves.sort(function (a, b) { return a.position - b.position; });
+      return trouves.map(function (element) { return element.arret; });
+    }
+
+    function terminus(ligne, indexDepart, indexArrivee) {
+      if (indexArrivee > indexDepart) {
+        return ligne.arrets[ligne.arrets.length - 1];
+      }
+      return ligne.arrets[0];
+    }
+
+    function chercherTrajet(depart, arrivee) {
+      // 1. Une ligne directe ?
+      for (const ligne of lignes) {
+        const i = ligne.arrets.indexOf(depart);
+        const j = ligne.arrets.indexOf(arrivee);
+        if (i !== -1 && j !== -1) {
+          const nombre = Math.abs(j - i);
+          return 'De ' + depart + ' à ' + arrivee + ' :\n'
+            + 'Prenez le ' + ligne.nom + ' direction ' + terminus(ligne, i, j) + '.\n'
+            + 'Descendez à ' + arrivee + ' (' + nombre + ' arrêt(s), environ ' + (nombre * MINUTES_PAR_ARRET) + ' min).';
+        }
+      }
+
+      // 2. Sinon, une seule correspondance ?
+      let meilleur = null;
+      for (const ligne1 of lignes) {
+        const i = ligne1.arrets.indexOf(depart);
+        if (i === -1) { continue; }
+        for (const ligne2 of lignes) {
+          const j = ligne2.arrets.indexOf(arrivee);
+          if (j === -1) { continue; }
+          for (const change of ligne1.arrets) {
+            const c1 = ligne1.arrets.indexOf(change);
+            const c2 = ligne2.arrets.indexOf(change);
+            if (c2 === -1) { continue; }
+            const nombre = Math.abs(c1 - i) + Math.abs(j - c2);
+            if (meilleur === null || nombre < meilleur.nombre) {
+              meilleur = { ligne1: ligne1, ligne2: ligne2, change: change, i: i, j: j, c1: c1, c2: c2, nombre: nombre };
+            }
+          }
+        }
+      }
+      if (meilleur !== null) {
+        const duree = meilleur.nombre * MINUTES_PAR_ARRET + 5;
+        return 'De ' + depart + ' à ' + arrivee + ' :\n'
+          + '1. Prenez le ' + meilleur.ligne1.nom + ' direction ' + terminus(meilleur.ligne1, meilleur.i, meilleur.c1) + '.\n'
+          + '2. Descendez à ' + meilleur.change + ' et prenez le ' + meilleur.ligne2.nom + ' direction ' + terminus(meilleur.ligne2, meilleur.c2, meilleur.j) + '.\n'
+          + '3. Descendez à ' + arrivee + ' (' + meilleur.nombre + ' arrêts, environ ' + duree + ' min avec la correspondance).';
+      }
+
+      return "Je n'ai pas trouvé de trajet direct ou avec une seule correspondance entre " + depart + ' et ' + arrivee + '.';
+    }
+
+    function listeDesLignes() {
+      let texte = 'Les lignes du réseau :';
+      for (const ligne of lignes) {
+        texte += '\n- ' + ligne.nom + ' : ' + ligne.arrets.join(' – ');
+      }
+      return texte;
+    }
+
+    function repondre(question) {
+      const texte = simplifier(question);
+      const arrets = trouverArrets(texte);
+
+      if (arrets.length >= 2) {
+        return chercherTrajet(arrets[0], arrets[1]);
+      }
+
+      for (const reponse of reponses) {
+        for (const mot of reponse.mots) {
+          if (contientMot(texte, mot)) {
+            return reponse.texte === null ? listeDesLignes() : reponse.texte;
+          }
+        }
+      }
+
+      if (arrets.length === 1) {
+        const noms = lignes
+          .filter(function (ligne) { return ligne.arrets.includes(arrets[0]); })
+          .map(function (ligne) { return ligne.nom; });
+        return "L'arrêt " + arrets[0] + ' est desservi par : ' + noms.join(', ') + ".\nDites-moi aussi votre arrêt d'arrivée pour avoir un trajet.";
+      }
+
+      return "Je n'ai pas compris. Essayez « de la gare au stade », « horaires », « tarifs » ou « lignes ».";
+    }
+
+    // La conversation est gardée dans le navigateur (localStorage) sous ce nom.
+    const CLE_MEMOIRE = 'assistant-bus-tram';
+    let historique = [];
+
+    function afficherBulle(texte, auteur) {
+      const bulle = document.createElement('p');
+      bulle.className = 'bulle ' + auteur;
+      bulle.textContent = texte;
+      conversation.appendChild(bulle);
+      conversation.scrollTop = conversation.scrollHeight;
+    }
+
+    function ajouterBulle(texte, auteur) {
+      afficherBulle(texte, auteur);
+      historique.push({ texte: texte, auteur: auteur });
+      localStorage.setItem(CLE_MEMOIRE, JSON.stringify(historique));
+    }
+
+    function lireMemoire() {
+      try {
+        const contenu = JSON.parse(localStorage.getItem(CLE_MEMOIRE));
+        if (Array.isArray(contenu)) {
+          return contenu;
+        }
+      } catch (probleme) {
+        // Mémoire illisible : on repart d'une conversation vide.
+      }
+      return [];
+    }
+
+    formulaire.addEventListener('submit', function (evenement) {
+      evenement.preventDefault();
+      const question = champ.value.trim();
+      if (question === '') {
+        erreur.textContent = 'Votre message est vide : écrivez une question avant de valider.';
+        champ.value = '';
+        champ.focus();
+        return;
+      }
+      erreur.textContent = '';
+      ajouterBulle(question, 'voyageur');
+      ajouterBulle(repondre(question), 'assistant');
+      champ.value = '';
+      champ.focus();
+    });
+
+    boutonEffacer.addEventListener('click', function () {
+      conversation.textContent = '';
+      erreur.textContent = '';
+      historique = [];
+      localStorage.removeItem(CLE_MEMOIRE);
+      ajouterBulle(ACCUEIL, 'assistant');
+      champ.focus();
+    });
+
+    historique = lireMemoire();
+    if (historique.length === 0) {
+      ajouterBulle(ACCUEIL, 'assistant');
+    } else {
+      for (const message of historique) {
+        afficherBulle(message.texte, message.auteur);
+      }
+    }
+  </script>
+</body>
+</html>
