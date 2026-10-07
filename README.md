@@ -1,4 +1,10 @@
-# Cap Web · jour 2
+# Cap Web · jours 2 et 3
+
+**Le projet** : Cap Web, assistant fictif d'un réseau de bus et de tram (binôme b03). Pour l'installer, le lancer, le tester et comprendre son code, lisez [atelier/README.md](atelier/README.md) ; ce qu'il doit faire est décrit dans [atelier/SPEC.md](atelier/SPEC.md), et le journal de travail des jours 2 et 3 est dans le [carnet](carnet-j2.md).
+
+La suite de ce fichier est la consigne d'origine du jour 2, gardée telle quelle.
+
+---
 
 Ce dossier contient tout le jour 2, sur votre poste : l'atelier (Cap Web et son contrat), les fiches des 4 rounds, le carnet et la [grille d'évaluation](GRILLE.md) du module. Les patchs du round 4 arrivent au début du round 4, dans un second ZIP. Pas de GitHub aujourd'hui.
 

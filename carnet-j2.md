@@ -115,7 +115,7 @@ Thème : réseau de bus et de tram (fictif). Cap Web recommande des trajets d'un
 
 ## Étape 4 · La version mobile
 
-- Media query `max-width: 600px` à la fin de `styles.css` : le bouton Envoyer passe en `align-self: stretch`. À 375 px, bouton de 309 px, aussi large que le formulaire, aucun défilement horizontal. Sur grand écran, rien ne change.
+- Media query `max-width: 600px` à la fin de `styles.css` : le bouton Envoyer passe en `align-self: stretch`. À 375 px, bouton de 343 px, aussi large que le formulaire, aucun défilement horizontal (mesure refaite après le style final). Sur grand écran, rien ne change.
 - En avance : thème sombre avec `prefers-color-scheme: dark`, seules les variables de `:root` changent.
 
 ## Étape 5 · Plan B : la version
@@ -134,6 +134,22 @@ Thème : réseau de bus et de tram (fictif). Cap Web recommande des trajets d'un
 - Observé pendant l'essai de panne : la réponse d'erreur met environ deux secondes à venir, sans rien à l'écran. Ajout d'un statut « Recherche d'un conseil… » pendant l'attente. Essai d'un `AbortSignal.timeout(3000)` refusé par le lint (`'AbortSignal' is not defined`) : retiré plutôt que de changer la configuration du lint.
 - « aide » annonce aussi « conseil ».
 
+## Étape 8 · Le projet sur GitHub
+
+- Dépôt distant utilisé, et qui l'a créé :
+- Branche poussée :
+- Le clone de l'autre personne lance Cap Web (`npm ci`, `npm start`) :
+
+## Étape 9 · Chacun sa branche
+
+- Branche et pull request de A (arborescence du README) :
+- Branche et pull request de B (couleur dans `styles.css`) :
+
+## Étape 10 · La revue croisée
+
+- Commentaire laissé sur la pull request de l'autre (type et fait précis) :
+- Les deux fusions visibles dans `git log --oneline --graph` :
+
 ## Étape 11 · Les quatre attaques
 
 | Attaque | Résultat |
@@ -145,6 +161,7 @@ Thème : réseau de bus et de tram (fictif). Cap Web recommande des trajets d'un
 
 - README mis à jour : à quoi sert Cap Web, installer, lancer, tester, arborescence commentée, route `/api/conseil`.
 - `npm run verify` : lint propre, 55 tests sur 55, dépendances conformes, 8 tests navigateur sur 8.
+- Les commandes du README essayées par l'autre personne, dans son clone :
 
 ## En plus · Style épuré et itinéraire sur un plan
 
@@ -154,3 +171,10 @@ Thème : réseau de bus et de tram (fictif). Cap Web recommande des trajets d'un
 - Calcul : Dijkstra sur des états « arrêt + ligne », 2 min par tronçon en tram, 3 en bus, 4 par correspondance. Exemple vérifié : Ruisseau → Fontaine passe par le bus 30 puis le tram T2 (18 min) plutôt que bus 12, T1 puis T2 (20 min).
 - Tests : `tests/calculerItineraire.test.js` (9 tests) et `tests/modulesCarte.test.js` (2 tests). `npm run verify` : lint propre, 66 tests sur 66, dépendances conformes, 8 tests navigateur sur 8.
 - Observé en vérifiant : l'étiquette « Hôtel de Ville » touchait « Université » (déplacée sous la ligne) ; sur téléphone, les noms d'arrêts étaient illisibles (agrandis sous 600 px).
+- `SPEC.md` complétée : critères 6 à 11 pour le troisième mot, le compteur, la version mobile, la version, le conseil et l'itinéraire, chacun avec ce qui le vérifie.
+
+## Étape 12 · Le bilan
+
+- Bilans écrits dans `bilan/` (un fichier par personne) :
+- `git push` répond « Everything up-to-date » chez chacun :
+- Checklist du livrable entièrement cochée :

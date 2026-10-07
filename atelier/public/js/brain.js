@@ -1,6 +1,6 @@
 // Cap Web — cerveau à règles. Fonctions pures : aucun accès à la page.
 
-// Vos réglages : recopiez ici la limite et les deux mots de votre cahier-personnel.json.
+// Vos réglages : la limite et les deux mots de votre cahier-personnel.json, plus « fontaine », ajouté en J3.
 export const LIMITE = 280;
 
 const MOTS = {

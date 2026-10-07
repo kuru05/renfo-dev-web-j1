@@ -1,4 +1,5 @@
-// Cap Web — câblage : lire le formulaire, mettre à jour l'historique, demander l'affichage.
+// Cap Web — câblage : lire les formulaires, mettre à jour l'historique, demander l'affichage
+// de la discussion (view.js) et du trajet (carte.js), appeler le serveur (version, conseil).
 import { validateMessage, replyTo, LIMITE } from './brain.js';
 import { renderMessages } from './view.js';
 import { RESEAU, listerArrets, calculerItineraire, decrireEtape, resumerItineraire } from './reseau.js';

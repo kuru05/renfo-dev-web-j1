@@ -8,11 +8,13 @@ Cap Web est un petit assistant conversationnel qui tourne dans le navigateur, su
 - trois arrêts du réseau : « ruisseau » et « marché » (les deux mots du binôme, réglés dans `cahier-personnel.json`) et « fontaine » ;
 - « conseil » : Cap Web demande un conseil de voyage au serveur (route `/api/conseil`). Si le serveur ne répond pas, il affiche « Le serveur ne répond pas : conseil indisponible. ».
 
+Il refuse les messages vides ou de plus de 280 caractères, affiche chaque message comme du texte (jamais comme du HTML), compte les caractères pendant la frappe et garde la conversation dans le navigateur après un rechargement.
+
 La page propose aussi un **itinéraire** : on choisit un arrêt de départ et un arrêt d'arrivée (dans les listes ou en cliquant sur le plan), et Cap Web affiche le trajet le plus rapide, étape par étape, et le met en évidence sur le plan du réseau. Le réseau est inventé : deux trams (T1 Gare – Campus, T2 Fontaine – Stade) et deux bus (12 Ruisseau – Marché, 30 Ruisseau – Université), 13 arrêts. Le temps compte 2 minutes entre deux arrêts en tram, 3 en bus, et 4 minutes par correspondance.
 
-Il refuse les messages vides ou de plus de 280 caractères, affiche chaque message comme du texte (jamais comme du HTML), compte les caractères pendant la frappe et garde la conversation dans le navigateur après un rechargement. La page s'adapte au mobile (sous 600 px) et au thème sombre du système.
+La page s'adapte au mobile (sous 600 px) et au thème sombre du système.
 
-Le projet sert de support de formation : un contrat de tests (`tests/contrat/`) dit ce que Cap Web doit faire.
+Le projet sert de support de formation : un contrat de tests (`tests/contrat/`) dit ce que Cap Web doit faire, et [SPEC.md](SPEC.md) liste chaque comportement attendu avec ce qui le vérifie.
 
 ## Installer
 
