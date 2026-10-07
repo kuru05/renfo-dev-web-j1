@@ -93,9 +93,64 @@ Chacun, une phrase : ce que vous savez faire ce soir et que vous ne saviez pas f
 
 # J3 · Terminer Cap Web
 
+Thème : réseau de bus et de tram (fictif). Cap Web recommande des trajets d'un point A à un point B selon les meilleurs trajets. Les mots du cahier personnel (`ruisseau`, `marché`) ne changent pas : ils deviennent des noms d'arrêts, comme `fontaine`.
+
 ## Étape 1 · Le troisième mot
 
 - Prédiction (avant de toucher au code) : « aide » donne toute la liste des mots connus.
-- Mot ajouté : `fontaine` (« Une fontaine donne de l'eau potable. »).
+- Mot ajouté : `fontaine` (phrase d'origine « Une fontaine donne de l'eau potable. », devenue « Station Fontaine : terminus du tram T2, parking relais à côté. » avec le thème transports).
 - Observé : la liste contient bien les trois mots, mais la phrase annonce encore « deux mots à moi » : « Je connais « salut », « aide », « test », et deux mots à moi : « ruisseau » et « marché » et « fontaine ». » La prédiction était juste pour la liste (calculée avec `Object.keys(MOTS)`), fausse pour le nombre, écrit à la main.
 - Correction : « deux » remplacé par `${Object.keys(MOTS).length}`, le nombre est maintenant calculé.
+
+## Étape 2 · Le compteur de caractères
+
+- `<p id="compteur">` sous le `textarea`, relié par `aria-describedby="compteur"`. Dans `app.js`, `mettreAJourCompteur()` écrit `longueur / LIMITE`, appelée à chaque `input`, après l'envoi et au chargement.
+- Vérifié dans la page : « 0 / 280 », puis « 7 / 280 » après « bonjour », puis « 0 / 280 » après l'envoi ; console F12 sans rouge.
+
+## Étape 3 · L'accessibilité avec Lighthouse
+
+- Score Accessibilité avec le label :
+- Score sans le label, et l'alerte affichée :
+- Essai au clavier seul (Tab, message, Entrée) :
+
+## Étape 4 · La version mobile
+
+- Media query `max-width: 600px` à la fin de `styles.css` : le bouton Envoyer passe en `align-self: stretch`. À 375 px, bouton de 309 px, aussi large que le formulaire, aucun défilement horizontal. Sur grand écran, rien ne change.
+- En avance : thème sombre avec `prefers-color-scheme: dark`, seules les variables de `:root` changent.
+
+## Étape 5 · Plan B : la version
+
+- `afficherVersion()` avec `async`, `await`, `try`, `catch` et la vérification de `reponse.ok`.
+- Vérifié : le pied de page affiche « version dev » ; avec `/version2.json`, le serveur répond 404 et le pied de page affiche « version indisponible ». Chemin remis.
+
+## Étape 6 · La route /api/conseil
+
+- Trois conseils de transport dans `server/app.js`, tirés au hasard, renvoyés en `{ conseil }` avec `application/json`.
+- Test `tests/conseil.test.js` : statut 200 et `content-type` JSON. Vérifié qu'il rougit si la route est renommée (`actual: 404, expected: 200`). `npm test` : 55 sur 55.
+
+## Étape 7 · Cap Web donne un conseil
+
+- `demanderConseil()` appelle `/api/conseil` ; en cas d'erreur, « Le serveur ne répond pas : conseil indisponible. ». L'écouteur `submit` est devenu `async`.
+- Observé pendant l'essai de panne : la réponse d'erreur met environ deux secondes à venir, sans rien à l'écran. Ajout d'un statut « Recherche d'un conseil… » pendant l'attente. Essai d'un `AbortSignal.timeout(3000)` refusé par le lint (`'AbortSignal' is not defined`) : retiré plutôt que de changer la configuration du lint.
+- « aide » annonce aussi « conseil ».
+
+## Étape 11 · Les quatre attaques
+
+| Attaque | Résultat |
+|---|---|
+| Serveur arrêté, puis « conseil » | « Le serveur ne répond pas : conseil indisponible. », pas d'écran blanc |
+| Message de 281 caractères | refusé, statut « Le message doit contenir 280 caractères au maximum. » |
+| `<b>test</b>` | affiché tel quel, chevrons compris, aucun gras |
+| 375 px de large | tout reste lisible, bouton Envoyer pleine largeur, pas de défilement horizontal |
+
+- README mis à jour : à quoi sert Cap Web, installer, lancer, tester, arborescence commentée, route `/api/conseil`.
+- `npm run verify` : lint propre, 55 tests sur 55, dépendances conformes, 8 tests navigateur sur 8.
+
+## En plus · Style épuré et itinéraire sur un plan
+
+- Style refait avec le skill frontend-design : police Bahnschrift (type DIN, signalétique des transports), fond blanc, la discussion dessinée comme une ligne de tram dont chaque réponse est un arrêt.
+- Itinéraire : un départ, une arrivée (listes ou clic sur le plan), puis le trajet le plus rapide, étape par étape, mis en évidence sur le plan du réseau fictif (T1, T2, bus 12, bus 30, 13 arrêts).
+- Découpage, pour respecter `AGENTS.md` : `reseau.js` (données et calcul, fonctions pures), `carte.js` (dessin SVG avec `createElementNS` et `textContent`, jamais `innerHTML`), `app.js` (câblage). Les deux nouveaux modules sont ajoutés à la liste des fichiers servis par `server/app.js`.
+- Calcul : Dijkstra sur des états « arrêt + ligne », 2 min par tronçon en tram, 3 en bus, 4 par correspondance. Exemple vérifié : Ruisseau → Fontaine passe par le bus 30 puis le tram T2 (18 min) plutôt que bus 12, T1 puis T2 (20 min).
+- Tests : `tests/calculerItineraire.test.js` (9 tests) et `tests/modulesCarte.test.js` (2 tests). `npm run verify` : lint propre, 66 tests sur 66, dépendances conformes, 8 tests navigateur sur 8.
+- Observé en vérifiant : l'étiquette « Hôtel de Ville » touchait « Université » (déplacée sous la ligne) ; sur téléphone, les noms d'arrêts étaient illisibles (agrandis sous 600 px).

@@ -3,21 +3,49 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Cap Web — assistant apprentissage web</title>
+  <title>Cap Web — assistant bus et tram</title>
   <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
   <header>
     <h1>Cap Web</h1>
-    <p>Assistant fictif pour apprendre le web. Réponse à règles, pas une IA réelle.</p>
+    <p>Assistant fictif du réseau de bus et de tram : il vous aide à aller d’un point A à un point B. Réponses à règles, pas une IA réelle.</p>
   </header>
   <main>
+    <section aria-labelledby="titre-trajet" class="itineraire">
+      <h2 id="titre-trajet">Itinéraire</h2>
+      <form id="trajet-form">
+        <div class="choix-arrets">
+          <div>
+            <label for="depart">Départ</label>
+            <select id="depart" name="depart" required>
+              <option value="">Choisir un arrêt</option>
+            </select>
+          </div>
+          <div>
+            <label for="arrivee">Arrivée</label>
+            <select id="arrivee" name="arrivee" required>
+              <option value="">Choisir un arrêt</option>
+            </select>
+          </div>
+        </div>
+        <button type="submit">Trouver le trajet</button>
+      </form>
+      <p id="trajet-resume" aria-live="polite">Choisissez un départ et une arrivée, dans les listes ou en cliquant sur la carte.</p>
+      <ol id="etapes"></ol>
+      <svg id="carte" viewBox="0 0 620 390" role="img" aria-labelledby="titre-carte">
+        <title id="titre-carte">Plan du réseau fictif de bus et de tram</title>
+      </svg>
+      <ul id="legende" aria-label="Lignes du réseau"></ul>
+    </section>
+
     <section aria-labelledby="titre-chat">
       <h2 id="titre-chat">Discussion</h2>
       <ul id="messages" aria-live="polite" aria-label="Messages"></ul>
       <form id="chat-form">
         <label for="message">Votre message (<span id="limite">…</span> caractères maximum)</label>
-        <textarea id="message" name="message" rows="3" required></textarea>
+        <textarea id="message" name="message" rows="3" required aria-describedby="compteur"></textarea>
+        <p id="compteur"></p>
         <button type="submit">Envoyer</button>
       </form>
       <button type="button" id="effacer">Effacer la conversation</button>

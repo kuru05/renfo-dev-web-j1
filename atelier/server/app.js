@@ -9,7 +9,9 @@ const FICHIERS = {
   '/styles.css': 'styles.css',
   '/js/app.js': 'js/app.js',
   '/js/brain.js': 'js/brain.js',
-  '/js/view.js': 'js/view.js'
+  '/js/view.js': 'js/view.js',
+  '/js/reseau.js': 'js/reseau.js',
+  '/js/carte.js': 'js/carte.js'
 };
 
 // MIME corrects pour chaque fichier servi.
@@ -18,8 +20,17 @@ const TYPES = {
   'styles.css': 'text/css; charset=utf-8',
   'js/app.js': 'text/javascript; charset=utf-8',
   'js/brain.js': 'text/javascript; charset=utf-8',
-  'js/view.js': 'text/javascript; charset=utf-8'
+  'js/view.js': 'text/javascript; charset=utf-8',
+  'js/reseau.js': 'text/javascript; charset=utf-8',
+  'js/carte.js': 'text/javascript; charset=utf-8'
 };
+
+// Conseils du réseau de bus et de tram, servis par /api/conseil.
+const CONSEILS = [
+  'Validez votre titre de transport à chaque montée, même en correspondance.',
+  'Aux heures de pointe, le tram est souvent plus rapide que le bus : il ne prend pas les bouchons.',
+  'Avant de partir, vérifiez l’heure du dernier passage : certaines lignes s’arrêtent vers 21 h.'
+];
 
 export function createApp({ publicDir, version = 'dev' } = {}) {
   const serveur = http.createServer((req, res) => {
@@ -48,6 +59,14 @@ export function createApp({ publicDir, version = 'dev' } = {}) {
     } catch {
       res.writeHead(404, { 'content-type': 'text/plain; charset=utf-8' });
       res.end('Non trouvé');
+      return;
+    }
+    // Un conseil de voyage tiré au hasard, en JSON.
+    if (chemin === '/api/conseil') {
+      const conseil = CONSEILS[Math.floor(Math.random() * CONSEILS.length)];
+      const corps = JSON.stringify({ conseil });
+      res.writeHead(200, { 'content-type': 'application/json; charset=utf-8', 'content-length': Buffer.byteLength(corps) });
+      res.end(methode === 'HEAD' ? '' : corps);
       return;
     }
     // Métadonnée de version fournie au démarrage.
