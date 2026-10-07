@@ -90,3 +90,12 @@ Patch 3, corrigé dans `abordage/mon-patch.patch` : `enGras` ne produit plus de 
 ## Fin de journée
 
 Chacun, une phrase : ce que vous savez faire ce soir et que vous ne saviez pas faire ce matin. Relisez votre positionnement : une notion est-elle passée de « à renforcer » à « à l'aise » ?
+
+# J3 · Terminer Cap Web
+
+## Étape 1 · Le troisième mot
+
+- Prédiction (avant de toucher au code) : « aide » donne toute la liste des mots connus.
+- Mot ajouté : `fontaine` (« Une fontaine donne de l'eau potable. »).
+- Observé : la liste contient bien les trois mots, mais la phrase annonce encore « deux mots à moi » : « Je connais « salut », « aide », « test », et deux mots à moi : « ruisseau » et « marché » et « fontaine ». » La prédiction était juste pour la liste (calculée avec `Object.keys(MOTS)`), fausse pour le nombre, écrit à la main.
+- Correction : « deux » remplacé par `${Object.keys(MOTS).length}`, le nombre est maintenant calculé.
