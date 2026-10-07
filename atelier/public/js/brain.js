@@ -4,18 +4,18 @@
 export const LIMITE = 280;
 
 const MOTS = {
-  ruisseau: 'Un ruisseau est un petit cours d’eau.',
-  marché: 'Le marché ouvre le samedi matin.',
-  fontaine: 'Une fontaine donne de l’eau potable.'
+  ruisseau: 'Arrêt Ruisseau : bus 12 vers Marché, bus 30 vers l’Université.',
+  marché: 'Arrêt Marché : tram T1 entre Gare et Campus, correspondance avec le bus 12.',
+  fontaine: 'Station Fontaine : terminus du tram T2, parking relais à côté.'
 };
 
 const motsConnus = Object.keys(MOTS).map((mot) => `« ${mot} »`).join(' et ');
 
 const REPONSES = {
-  salut: 'Bonjour ! Je suis Cap Web, un assistant à règles. Écrivez « aide » pour voir ce que je sais faire.',
-  aide: `Je connais « salut », « aide », « test », et ${Object.keys(MOTS).length} mots à moi : ${motsConnus}.`,
-  test: 'Test bien reçu : mes règles fonctionnent.',
-  repli: 'Je n’ai pas compris. Écrivez « aide » pour voir ce que je sais faire.'
+  salut: 'Bonjour ! Je suis Cap Web, votre assistant bus et tram. Écrivez « aide » pour voir les arrêts que je connais.',
+  aide: `Je connais « salut », « aide », « test », et ${Object.keys(MOTS).length} arrêts du réseau : ${motsConnus}. Écrivez « conseil » pour un conseil de voyage, ou utilisez l’itinéraire au-dessus pour aller d’un arrêt à un autre.`,
+  test: 'Test bien reçu : le réseau répond.',
+  repli: 'Je ne connais pas encore cet arrêt. Écrivez « aide » pour voir les arrêts que je connais.'
 };
 
 export function validateMessage(raw) {
