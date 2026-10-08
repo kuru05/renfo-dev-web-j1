@@ -6,8 +6,8 @@ Mardi, j'étais à l'aise avec le HTML et le CSS. Le JavaScript, le DOM, Git et 
 
 ## Deux choses que je sais faire maintenant
 
-1. **Réagir à une touche du clavier en JavaScript.** Entrée envoie le message et Maj+Entrée va à la ligne. J'ai utilisé `keydown` et `requestSubmit()`, comme ça le message passe par la même vérification que le bouton. Commit `1da7210`.
-2. **Écrire un test qui sert vraiment.** J'ai écrit quatre tests pour `estMessage`. Ensuite j'ai cassé la fonction exprès (`return true;`) : trois tests sont devenus rouges, donc ils servent à quelque chose. Commit `e33b42e`.
+1. **Réagir à une touche du clavier en JavaScript.** Entrée envoie le message et Maj+Entrée va à la ligne. J'ai utilisé `keydown` et `requestSubmit()`, comme ça le message passe par la même vérification que le bouton. Commit `d7efe43`.
+2. **Écrire un test qui sert vraiment.** J'ai écrit quatre tests pour `estMessage`. Ensuite j'ai cassé la fonction exprès (`return true;`) : trois tests sont devenus rouges, donc ils servent à quelque chose. Commit `ee7604c`.
 
 ## Deux points à renforcer
 
