@@ -61,11 +61,11 @@ Pour aller plus loin, avec l'agent, les demandes du formateur :
 |---|---|
 | Fonction tirée | F3 `estEnMajuscules` |
 | Le rouge vu (message exact) | `SyntaxError: The requested module '../public/js/brain.js' does not provide an export named 'estEnMajuscules'` |
-| Identifiant du commit `test:` | bed6ea2 |
-| Identifiant du commit `feat:` | 08ee7f4 |
+| Identifiant du commit `test:` | 2d3cf87 |
+| Identifiant du commit `feat:` | d127d9f |
 | Casse volontaire : la ligne changée | `return lettres.length >= 2 && !/p{Ll}/u.test(message);` remplacée par `return false;` |
 | Casse volontaire : le test devenu rouge | « C1 : un message tout en majuscules donne true, accents et ponctuation compris » et « C4 : il faut deux lettres au moins » |
-| Pour aller plus loin : la deuxième fonction | F2 `compterMots` (test: 2dc2699, feat: 156e004) |
+| Pour aller plus loin : la deuxième fonction | F2 `compterMots` (test: b44f400, feat: e3609a6) |
 
 Les critères C1 à C5 de votre fonction, recopiés de la fiche :
 
