@@ -109,9 +109,9 @@ Thème : réseau de bus et de tram (fictif). Cap Web recommande des trajets d'un
 
 ## Étape 3 · L'accessibilité avec Lighthouse
 
-- Score Accessibilité avec le label :
-- Score sans le label, et l'alerte affichée :
-- Essai au clavier seul (Tab, message, Entrée) :
+- Score Accessibilité avec le label : 100 (mesuré avec Lighthouse 12, par Claude).
+- Score sans le label, et l'alerte affichée : 95, alerte « Les éléments de formulaire ne sont pas associés à des libellés » (« Form elements do not have associated labels »). Label remis ensuite.
+- Essai au clavier seul (Tab, message, Entrée) : Entrée envoyait d'abord une nouvelle ligne au lieu du message ; depuis l'étape bonus 15 (`feat: Entrée envoie le message`), Entrée envoie et Maj+Entrée va à la ligne.
 
 ## Étape 4 · La version mobile
 
