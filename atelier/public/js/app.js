@@ -38,6 +38,8 @@ function charger() {
 
 function mettreAJourCompteur() {
   compteur.textContent = `${champ.value.length} / ${LIMITE}`;
+  // À 90 % de la limite, le compteur prévient : la classe change, le CSS s'occupe de l'apparence.
+  compteur.classList.toggle('alerte', champ.value.length >= LIMITE * 0.9);
 }
 
 champ.addEventListener('input', mettreAJourCompteur);
