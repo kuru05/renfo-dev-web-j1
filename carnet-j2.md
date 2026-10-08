@@ -8,16 +8,16 @@ Pour chaque notion, chacun écrit « à l'aise » ou « à renforcer ». Ce n'es
 
 | Notion | Hugo : | Merlin : | Louis : |
 |---|---|---|---|
-| Structure HTML | | | à l'aise |
-| CSS et responsive | | | à l'aise |
-| JavaScript | | | à renforcer |
-| DOM et événements | | | à renforcer |
-| Git | | | à renforcer |
-| Tests | | | à renforcer |
+| Structure HTML | à l'aise | | à l'aise |
+| CSS et responsive | à l'aise | | à l'aise |
+| JavaScript | à renforcer | | à renforcer |
+| DOM et événements | à renforcer | | à renforcer |
+| Git | à l'aise | | à renforcer |
+| Tests | à l'aise | | à renforcer |
 
 Chacun, en une phrase, son objectif personnel pour J2 et J3.
 
-Hugo :
+Hugo : le travail d'équipe à travers git et la répartition efficace des tâches
 
 Merlin :
 
