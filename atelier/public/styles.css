@@ -1,91 +1,409 @@
+/* Cap Web — assistant bus et tram.
+   Inspiré de la signalétique des transports : police de type DIN, une couleur de ligne,
+   et la conversation dessinée comme une ligne de tram dont chaque réponse est un arrêt.
+   Toutes les couleurs sont dans :root, un seul endroit à modifier. */
+:root {
+  color-scheme: light;
+  --fond: #f6f7f6;
+  --surface: #ffffff;
+  --encre: #1c2226;
+  --doux: #5a646b;
+  --ligne: #00775c;
+  --ligne-fonce: #005c47;
+  --sur-ligne: #ffffff;
+  --trait: #d5dbd8;
+  --bulle: #e8ecea;
+  --police: Bahnschrift, 'DIN Alternate', 'Roboto Condensed', 'Arial Narrow', system-ui, sans-serif;
+}
+
 * {
   box-sizing: border-box;
 }
 
 body {
   margin: 0;
-  font-family: system-ui, sans-serif;
-  line-height: 1.5;
-  color: #15213a;
-  background: #ffffff;
+  background: var(--fond);
+  color: var(--encre);
+  font-family: var(--police);
+  font-size: 1.0625rem;
+  line-height: 1.55;
 }
 
 header,
 main,
 footer {
-  max-width: 48rem;
+  width: 100%;
+  max-width: 40rem;
   margin: 0 auto;
-  padding: 1rem;
+  padding: 0 1rem;
 }
 
-h1,
+/* En-tête : le nom de l'assistant, précédé de son pictogramme de ligne. */
+header {
+  padding-top: 2.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--trait);
+}
+
+h1 {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0 0 0.4rem;
+  font-size: 2.25rem;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+}
+
+h1::before {
+  content: '';
+  flex: none;
+  width: 0.85em;
+  height: 0.85em;
+  background: var(--ligne);
+  border-radius: 0.2em;
+}
+
+header p {
+  max-width: 34rem;
+  margin: 0;
+  color: var(--doux);
+}
+
+main {
+  padding-top: 1.75rem;
+  padding-bottom: 1.5rem;
+}
+
 h2 {
-  margin: 0 0 0.5rem;
+  margin: 0 0 1rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1.2;
 }
 
-footer {
-  font-size: 0.9rem;
-}
-
+/* La conversation : un trait de ligne vertical, chaque réponse de Cap Web est un arrêt. */
 #messages {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
   list-style: none;
-  margin: 1rem 0;
-  padding: 0;
+  margin: 0 0 1.75rem;
+  padding: 0.25rem 0;
+}
+
+#messages::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0.45rem;
+  width: 0.25rem;
+  background: var(--ligne);
+  border-radius: 0.125rem;
+}
+
+#messages:empty {
+  display: none;
 }
 
 #messages li {
-  margin-bottom: 0.5rem;
-  padding: 0.5rem 0.75rem;
-  border: 1px solid #5b6b8c;
-  border-radius: 0.5rem;
+  max-width: 85%;
   overflow-wrap: break-word;
 }
 
-#chat-form {
+/* Vos messages : à droite, sur fond neutre. */
+#messages li:not(.bot) {
+  align-self: flex-end;
+  padding: 0.45rem 0.85rem;
+  background: var(--bulle);
+  border-radius: 0.375rem;
+}
+
+/* Réponses de Cap Web : posées sur la ligne, avec leur pastille d'arrêt. */
+#messages li.bot {
+  position: relative;
+  align-self: flex-start;
+  padding: 0.1rem 0 0.1rem 2rem;
+}
+
+#messages li.bot::before {
+  content: '';
+  position: absolute;
+  top: 0.4rem;
+  left: 0.125rem;
+  width: 0.9rem;
+  height: 0.9rem;
+  background: var(--surface);
+  border: 0.22rem solid var(--ligne);
+  border-radius: 50%;
+}
+
+#messages strong {
+  font-weight: 600;
+}
+
+#messages li.bot strong {
+  color: var(--ligne);
+}
+
+form {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.4rem;
 }
 
 label {
-  font-weight: 700;
+  font-weight: 600;
 }
 
 textarea {
   width: 100%;
-  padding: 0.5rem;
+  min-height: 5.5rem;
+  padding: 0.65rem 0.8rem;
   font: inherit;
   color: inherit;
-  border: 2px solid #5b6b8c;
-  border-radius: 0.5rem;
+  background: var(--surface);
+  border: 1px solid var(--doux);
+  border-radius: 0.375rem;
+  resize: vertical;
+}
+
+textarea:focus {
+  border-color: var(--ligne);
+}
+
+#compteur {
+  margin: 0;
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--doux);
+  text-align: right;
 }
 
 button {
-  align-self: flex-start;
-  padding: 0.6rem 1.2rem;
   font: inherit;
-  font-weight: 700;
-  color: #ffffff;
-  background: #0f5c9e;
-  border: 2px solid #0a3f6e;
-  border-radius: 0.5rem;
   cursor: pointer;
 }
 
-button:hover {
-  background: #0a3f6e;
+/* Bouton principal : la couleur de la ligne, comme un panneau. */
+form button[type='submit'] {
+  align-self: flex-start;
+  padding: 0.55rem 1.5rem;
+  font-weight: 600;
+  color: var(--sur-ligne);
+  background: var(--ligne);
+  border: 0;
+  border-radius: 0.375rem;
 }
 
-#suggestions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  list-style: none;
-  margin: 1rem 0;
+form button[type='submit']:hover {
+  background: var(--ligne-fonce);
+}
+
+/* Bouton secondaire : un simple lien d'action, discret. */
+#effacer {
+  margin-top: 1.25rem;
   padding: 0;
+  color: var(--doux);
+  background: none;
+  border: 0;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+#effacer:hover {
+  color: var(--encre);
+}
+
+:focus-visible {
+  outline: 2px solid var(--encre);
+  outline-offset: 3px;
 }
 
 #status {
   min-height: 1.5em;
+  margin: 0.75rem 0 0;
+  font-weight: 600;
+}
+
+/* Itinéraire : deux listes côte à côte, le résumé, les étapes, puis le plan du réseau. */
+.itineraire {
+  margin-bottom: 2.5rem;
+}
+
+.choix-arrets {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.choix-arrets > div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+select {
+  width: 100%;
+  padding: 0.5rem 0.6rem;
+  font: inherit;
+  color: inherit;
+  background: var(--surface);
+  border: 1px solid var(--doux);
+  border-radius: 0.375rem;
+}
+
+#trajet-form button[type='submit'] {
+  margin-top: 0.4rem;
+}
+
+#trajet-resume {
+  margin: 1rem 0 0.25rem;
+  font-weight: 600;
+}
+
+#etapes {
+  margin: 0 0 1rem;
+  padding-left: 1.4rem;
+}
+
+#etapes li {
+  margin-bottom: 0.2rem;
+}
+
+#carte {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin-top: 0.5rem;
+  background: var(--surface);
+  border: 1px solid var(--trait);
+  border-radius: 0.375rem;
+}
+
+#carte .troncon {
+  stroke-width: 7;
+  stroke-linecap: round;
+}
+
+#carte .pastille {
+  fill: var(--surface);
+  stroke: var(--encre);
+  stroke-width: 2.5;
+}
+
+#carte text {
+  font-family: var(--police);
+  font-size: 13px;
+  fill: var(--encre);
+}
+
+#carte .arret {
+  cursor: pointer;
+}
+
+#carte .arret:hover .pastille {
+  stroke-width: 4;
+}
+
+/* Un trajet affiché : le reste du réseau s'efface, le départ et l'arrivée sont pleins. */
+#carte.trajet .troncon:not(.actif),
+#carte.trajet .arret:not(.actif) {
+  opacity: 0.2;
+}
+
+#carte .arret.depart .pastille,
+#carte .arret.arrivee .pastille {
+  fill: var(--encre);
+}
+
+#carte .arret.actif text {
   font-weight: 700;
+}
+
+#legende {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1.25rem;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.95rem;
+}
+
+.pastille-ligne {
+  display: inline-block;
+  min-width: 2.2rem;
+  padding: 0 0.35rem;
+  font-weight: 700;
+  text-align: center;
+  color: #ffffff;
+  border-radius: 0.25rem;
+}
+
+footer {
+  padding-top: 1rem;
+  padding-bottom: 2rem;
+  font-size: 0.875rem;
+  color: var(--doux);
+  border-top: 1px solid var(--trait);
+}
+
+/* Version mobile : sous 600 px de large, le bouton Envoyer prend toute la largeur. */
+@media (max-width: 600px) {
+  header {
+    padding-top: 1.5rem;
+  }
+
+  h1 {
+    font-size: 1.85rem;
+  }
+
+  form button[type='submit'] {
+    align-self: stretch;
+  }
+
+  #messages li {
+    max-width: 92%;
+  }
+
+  .choix-arrets {
+    grid-template-columns: 1fr;
+  }
+
+  /* Le plan est réduit de moitié sur téléphone : les noms des arrêts grossissent d'autant. */
+  #carte text {
+    font-size: 19px;
+  }
+}
+
+/* Thème sombre : seules les variables changent. */
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --fond: #151a1d;
+    --surface: #1d2428;
+    --encre: #e7ecea;
+    --doux: #a3aeb4;
+    --ligne: #2fb08c;
+    --ligne-fonce: #4cc7a3;
+    --sur-ligne: #0d1513;
+    --trait: #2f383d;
+    --bulle: #262f34;
+  }
+}
+
+/* Le compteur prévient à 90 % de la limite (classe ajoutée par app.js). */
+#compteur.alerte {
+  color: #b00020;
+  font-weight: 700;
+}
+
+@media (prefers-color-scheme: dark) {
+  #compteur.alerte {
+    color: #ff8a80;
+  }
 }

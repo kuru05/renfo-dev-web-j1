@@ -1,12 +1,17 @@
-// L'affichage de Cap Web : il transforme le tableau des messages en lignes de la liste.
-// Il ne contient aucune règle de réponse.
+// Cap Web — affichage de l'historique. Aucune règle de réponse ici.
 
 export function renderMessages(messages, container) {
-  const lignes = messages.map((message) => {
-    const ligne = document.createElement('li');
-    const auteur = message.role === 'user' ? 'Vous' : 'Cap Web';
-    ligne.textContent = `${auteur} : ${message.text}`;
-    return ligne;
+  const lignes = messages.map((msg) => {
+    const li = document.createElement('li');
+    const nom = msg.role === 'user' ? 'Vous' : 'Cap Web';
+    // Le texte du message reste du texte : « <b>gras</b> » s'affiche tel quel.
+    const auteur = document.createElement('strong');
+    auteur.textContent = nom;
+    li.append(auteur, ` : ${msg.text}`);
+    if (msg.role === 'assistant') {
+      li.classList.add('bot');
+    }
+    return li;
   });
   container.replaceChildren(...lignes);
 }

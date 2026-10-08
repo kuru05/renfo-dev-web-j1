@@ -1,80 +1,180 @@
-import { validateMessage, replyTo } from './brain.js';
+// Cap Web — câblage : lire les formulaires, mettre à jour l'historique, demander l'affichage
+// de la discussion (view.js) et du trajet (carte.js), appeler le serveur (version, conseil).
+import { validateMessage, replyTo, estMessage, LIMITE } from './brain.js';
 import { renderMessages } from './view.js';
+import { RESEAU, listerArrets, calculerItineraire, decrireEtape, resumerItineraire } from './reseau.js';
+import { dessinerCarte, dessinerLegende, surlignerItineraire, remplirListeArrets, afficherEtapes } from './carte.js';
 
 const formulaire = document.querySelector('#chat-form');
-const statut = document.querySelector('#status');
 const champ = document.querySelector('#message');
 const liste = document.querySelector('#messages');
-const boutonsDeQuestions = document.querySelectorAll('#suggestions button');
-const boutonEffacer = document.querySelector('#effacer');
+const statut = document.querySelector('#status');
+const effacer = document.querySelector('#effacer');
+const versionElt = document.querySelector('#version');
+const limiteElt = document.querySelector('#limite');
+const compteur = document.querySelector('#compteur');
 
-// Nom sous lequel la conversation est gardée dans la mémoire du navigateur.
-const CLE_MEMOIRE = 'capweb.historique';
+const CLE = 'capweb.historique';
+const historique = [];
 
-// Vrai si la valeur ressemble à un message : { role, text } avec un rôle connu.
-function estUnMessage(valeur) {
-  return valeur !== null
-    && typeof valeur === 'object'
-    && (valeur.role === 'user' || valeur.role === 'assistant')
-    && typeof valeur.text === 'string';
+function sauvegarder() {
+  localStorage.setItem(CLE, JSON.stringify(historique));
 }
 
-// Relit la conversation gardée en mémoire. Une valeur abîmée ne casse rien :
-// la conversation repart vide et le statut l'explique.
-function lireMemoire() {
-  const brut = localStorage.getItem(CLE_MEMOIRE);
+function charger() {
+  const brut = localStorage.getItem(CLE);
   if (brut === null) {
-    return [];
+    return;
   }
   try {
-    const relu = JSON.parse(brut);
-    if (Array.isArray(relu) && relu.every(estUnMessage)) {
-      return relu;
+    const donnees = JSON.parse(brut);
+    if (Array.isArray(donnees)) {
+      historique.push(...donnees.filter(estMessage));
     }
   } catch {
-    // Le texte gardé n'est pas du JSON : on passe à la suite.
+    statut.textContent = 'Conversation précédente illisible : nouvelle conversation.';
   }
-  statut.textContent = 'Mémoire illisible : la conversation repart vide.';
-  return [];
 }
 
-// La conversation : un tableau d'objets { role, text }, où role vaut 'user' ou 'assistant'.
-let historique = lireMemoire();
-renderMessages(historique, liste);
+function mettreAJourCompteur() {
+  compteur.textContent = `${champ.value.length} / ${LIMITE}`;
+  // À 90 % de la limite, le compteur prévient : la classe change, le CSS s'occupe de l'apparence.
+  compteur.classList.toggle('alerte', champ.value.length >= LIMITE * 0.9);
+}
 
-// À l'envoi : la page ne se recharge pas, le cerveau vérifie le message puis répond.
-formulaire.addEventListener('submit', (event) => {
+champ.addEventListener('input', mettreAJourCompteur);
+
+// Entrée envoie le message, Maj+Entrée va à la ligne, comme dans une messagerie.
+// requestSubmit passe par l'écouteur submit : la validation reste la même.
+champ.addEventListener('keydown', (event) => {
+  if (event.key === 'Enter' && !event.shiftKey) {
+    event.preventDefault();
+    formulaire.requestSubmit();
+  }
+});
+
+// Demande un conseil au serveur ; en cas de panne, un message clair plutôt qu'un écran blanc.
+async function demanderConseil() {
+  try {
+    const reponse = await fetch('/api/conseil', { headers: { accept: 'application/json' } });
+    if (!reponse.ok) {
+      throw new Error(`HTTP ${reponse.status}`);
+    }
+    const donnees = await reponse.json();
+    if (typeof donnees.conseil !== 'string') {
+      throw new Error('conseil absent');
+    }
+    return donnees.conseil;
+  } catch {
+    return 'Le serveur ne répond pas : conseil indisponible.';
+  }
+}
+
+formulaire.addEventListener('submit', async (event) => {
   event.preventDefault();
-  const resultat = validateMessage(champ.value);
-  if (!resultat.ok) {
-    statut.textContent = resultat.error;
+  const controle = validateMessage(champ.value);
+  if (!controle.ok) {
+    statut.textContent = controle.error;
     champ.focus();
     return;
   }
-  historique.push({ role: 'user', text: resultat.value });
-  historique.push({ role: 'assistant', text: replyTo(resultat.value) });
-  localStorage.setItem(CLE_MEMOIRE, JSON.stringify(historique));
+  let reponse;
+  if (controle.value.toLowerCase() === 'conseil') {
+    statut.textContent = 'Recherche d’un conseil…';
+    reponse = await demanderConseil();
+  } else {
+    reponse = replyTo(controle.value);
+  }
+  historique.push({ role: 'user', text: controle.value });
+  historique.push({ role: 'assistant', text: reponse });
+  sauvegarder();
   renderMessages(historique, liste);
   champ.value = '';
+  mettreAJourCompteur();
   statut.textContent = '';
+  champ.focus();
 });
 
-// « Effacer la conversation » : après confirmation, vide le tableau, la mémoire et l'affichage.
-boutonEffacer.addEventListener('click', () => {
+effacer.addEventListener('click', () => {
   if (!confirm('Effacer toute la conversation ?')) {
     return;
   }
-  historique = [];
-  localStorage.removeItem(CLE_MEMOIRE);
+  historique.length = 0;
+  localStorage.removeItem(CLE);
   renderMessages(historique, liste);
   statut.textContent = 'Conversation effacée.';
 });
 
-// Un clic sur un bouton de question copie son texte dans le champ, sans envoyer le formulaire.
-for (const bouton of boutonsDeQuestions) {
-  bouton.addEventListener('click', () => {
-    champ.value = bouton.textContent;
-    champ.focus();
-    statut.textContent = 'Question copiée : modifiez-la ou envoyez-la.';
-  });
+// La limite vient de brain.js : un seul endroit à modifier.
+champ.maxLength = LIMITE;
+limiteElt.textContent = String(LIMITE);
+mettreAJourCompteur();
+
+charger();
+renderMessages(historique, liste);
+
+// Itinéraire : choisir un départ et une arrivée, dans les listes ou sur la carte.
+const formulaireTrajet = document.querySelector('#trajet-form');
+const choixDepart = document.querySelector('#depart');
+const choixArrivee = document.querySelector('#arrivee');
+const resumeTrajet = document.querySelector('#trajet-resume');
+const listeEtapes = document.querySelector('#etapes');
+const carte = document.querySelector('#carte');
+
+function afficherTrajet() {
+  const depart = choixDepart.value;
+  const arrivee = choixArrivee.value;
+  if (depart === '' || arrivee === '') {
+    resumeTrajet.textContent = 'Choisissez un départ et une arrivée.';
+    afficherEtapes(listeEtapes, []);
+    surlignerItineraire(carte, null, depart, arrivee);
+    return;
+  }
+  const itineraire = calculerItineraire(depart, arrivee);
+  resumeTrajet.textContent = resumerItineraire(itineraire, depart, arrivee);
+  afficherEtapes(listeEtapes, (itineraire?.etapes ?? []).map((etape) => decrireEtape(etape)));
+  surlignerItineraire(carte, itineraire, depart, arrivee);
 }
+
+// Un clic sur la carte choisit d'abord le départ, puis l'arrivée.
+function choisirArret(id) {
+  if (choixDepart.value === '' || choixArrivee.value !== '') {
+    choixDepart.value = id;
+    choixArrivee.value = '';
+    resumeTrajet.textContent = 'Départ choisi. Cliquez maintenant sur l’arrêt d’arrivée.';
+    afficherEtapes(listeEtapes, []);
+    surlignerItineraire(carte, null, id, '');
+    return;
+  }
+  choixArrivee.value = id;
+  afficherTrajet();
+}
+
+formulaireTrajet.addEventListener('submit', (event) => {
+  event.preventDefault();
+  afficherTrajet();
+});
+
+remplirListeArrets(choixDepart, listerArrets());
+remplirListeArrets(choixArrivee, listerArrets());
+dessinerCarte(carte, RESEAU, choisirArret);
+dessinerLegende(document.querySelector('#legende'), RESEAU);
+
+// Plan B : si le serveur ne répond pas, le pied de page le dit au lieu de rester sur « version… ».
+async function afficherVersion() {
+  try {
+    const reponse = await fetch('/version.json', { headers: { accept: 'application/json' } });
+    if (!reponse.ok) {
+      throw new Error(`HTTP ${reponse.status}`);
+    }
+    const donnees = await reponse.json();
+    if (typeof donnees.version !== 'string') {
+      throw new Error('version absente');
+    }
+    versionElt.textContent = `version ${donnees.version}`;
+  } catch {
+    versionElt.textContent = 'version indisponible';
+  }
+}
+
+afficherVersion();

@@ -1,7 +1,18 @@
+# Dépendances et sorties d'outils
 node_modules/
+dist/
 test-results/
 playwright-report/
+coverage/
+
+# Réglages locaux
 .env
 .env.*
-.DS_Store
-Thumbs.db
+.vercel
+
+# Bacs à sable du round 4 : chacun est un dépôt Git à part (git init, sans commit),
+# et chacun n'est que `abordage/base` + le patch correspondant.
+# Les patchs abordage/patch-*.patch gardent la trace de ces essais.
+abordage/essai-1/
+abordage/essai-2/
+abordage/essai-3/

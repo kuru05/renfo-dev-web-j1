@@ -1,0 +1,77 @@
+diff --git a/public/js/brain.js b/public/js/brain.js
+index 0e4c76f..ebf6f03 100644
+--- a/public/js/brain.js
++++ b/public/js/brain.js
+@@ -13,7 +13,7 @@ const liste = Object.keys(MOTS).map((mot) => `« ${mot} »`).join(' et ');
+ 
+ const REPONSES = {
+   salut: 'Bonjour ! Je suis Cap Web, un assistant à règles. Écrivez « aide » pour voir ce que je sais faire.',
+-  aide: `Je connais « salut », « aide », « test », et deux mots à moi : ${liste}.`,
++  aide: `Je connais **salut**, **aide**, **test**, et deux mots à moi : ${liste}.`,
+   test: 'Test bien reçu : mes règles fonctionnent.',
+   repli: 'Je ne connais pas encore cette phrase. Écrivez « aide » pour voir les mots que je connais.'
+ };
+diff --git a/public/js/view.js b/public/js/view.js
+index 39aceab..2648a66 100644
+--- a/public/js/view.js
++++ b/public/js/view.js
+@@ -1,11 +1,30 @@
+ // Cap Web — affichage de l'historique. Aucune règle de réponse ici.
+ 
++// Mise en forme légère : **mot** s'affiche en gras.
++// Découpe le texte en morceaux { texte, gras } : aucun HTML n'est produit,
++// chaque morceau sera affiché avec textContent.
++export function enGras(texte) {
++  return texte
++    .split(/\*\*(.+?)\*\*/g)
++    .map((morceau, i) => ({ texte: morceau, gras: i % 2 === 1 }))
++    .filter((morceau) => morceau.texte !== '');
++}
++
+ export function renderMessages(messages, container) {
+   const lignes = messages.map((msg) => {
+     const li = document.createElement('li');
+     const nom = document.createElement('strong');
+     nom.textContent = msg.role === 'user' ? 'Vous' : 'Cap Web';
+-    li.append(nom, ` : ${msg.text}`);
++    li.append(nom, ' : ');
++    for (const morceau of enGras(msg.text)) {
++      if (morceau.gras) {
++        const gras = document.createElement('strong');
++        gras.textContent = morceau.texte;
++        li.append(gras);
++      } else {
++        li.append(morceau.texte);
++      }
++    }
+     if (msg.role === 'assistant') {
+       li.classList.add('bot');
+     }
+diff --git a/tests/gras.test.js b/tests/gras.test.js
+new file mode 100644
+index 0000000..d3270e7
+--- /dev/null
++++ b/tests/gras.test.js
+@@ -0,0 +1,22 @@
++import { it } from 'node:test';
++import assert from 'node:assert/strict';
++import { enGras } from '../public/js/view.js';
++
++it('**mot** devient un morceau en gras', () => {
++  assert.deepEqual(enGras('un **mot** important'), [
++    { texte: 'un ', gras: false },
++    { texte: 'mot', gras: true },
++    { texte: ' important', gras: false }
++  ]);
++});
++
++it('un texte sans étoiles ne change pas', () => {
++  assert.deepEqual(enGras('salut'), [{ texte: 'salut', gras: false }]);
++});
++
++it('le HTML reste du texte, même entre étoiles', () => {
++  assert.deepEqual(enGras('<b>gras</b> **<img src=x>**'), [
++    { texte: '<b>gras</b> ', gras: false },
++    { texte: '<img src=x>', gras: true }
++  ]);
++});

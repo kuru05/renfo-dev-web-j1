@@ -1,63 +1,79 @@
-// Le cerveau de Cap Web : il vérifie un message et choisit une réponse.
-// Il ne connaît rien de la page : il reçoit du texte et renvoie du texte.
+// Cap Web — cerveau à règles. Fonctions pures : aucun accès à la page.
 
-// Limite du cahier personnel : nombre maximum de caractères d'un message.
-const LIMITE = 280;
+// Vos réglages : la limite et les deux mots de votre cahier-personnel.json, plus « fontaine », ajouté en J3.
+export const LIMITE = 280;
 
-const REPONSE_SALUT = 'Bonjour ! Je suis Cap Web, l’assistant du réseau de bus et de tram. Écrivez « aide » pour voir ce que je sais faire.';
-const REPONSE_AIDE = 'Posez une question sur les horaires, les tarifs ou un trajet (par exemple « Combien coûte un ticket ? »). Je connais aussi « salut », « aide » et « test ».';
-const REPONSE_TEST = 'Test réussi : Cap Web vous reçoit bien.';
-const REPONSE_HORAIRES = 'Horaires : les trams circulent de 5 h 30 à 0 h 30, les bus de 6 h à 22 h (réseau fictif).';
-const REPONSE_TARIFS = 'Tarifs : un ticket coûte 1,60 € et reste valable une heure, correspondances comprises (réseau fictif).';
-const REPONSE_TRAJET = 'Trajet : de la gare à l’université, prenez le tram A direction Campus, environ 15 minutes (réseau fictif).';
-const REPONSE_REPLI = 'Je n’ai pas compris. Écrivez « aide » pour voir les sujets que je connais.';
+const MOTS = {
+  ruisseau: 'Arrêt Ruisseau : bus 12 vers Marché, bus 30 vers l’Université.',
+  marché: 'Arrêt Marché : tram T1 entre Gare et Campus, correspondance avec le bus 12.',
+  fontaine: 'Station Fontaine : terminus du tram T2, parking relais à côté.'
+};
 
-// Vérifie le message brut. Renvoie { ok: false, error } ou { ok: true, value }.
+const motsConnus = Object.keys(MOTS).map((mot) => `« ${mot} »`).join(' et ');
+
+const REPONSES = {
+  salut: 'Bonjour ! Je suis Cap Web, votre assistant bus et tram. Écrivez « aide » pour voir les arrêts que je connais.',
+  aide: `Je connais « salut », « aide », « test », et ${Object.keys(MOTS).length} arrêts du réseau : ${motsConnus}. Écrivez « conseil » pour un conseil de voyage, ou utilisez l’itinéraire au-dessus pour aller d’un arrêt à un autre.`,
+  test: 'Test bien reçu : le réseau répond.',
+  repli: 'Je ne connais pas encore cet arrêt. Écrivez « aide » pour voir les arrêts que je connais.'
+};
+
 export function validateMessage(raw) {
   if (typeof raw !== 'string') {
-    return { ok: false, error: 'Le message doit être un texte.' };
+    return { ok: false, error: 'Le message doit être du texte.' };
   }
   const value = raw.trim();
   if (value === '') {
-    return { ok: false, error: 'Message vide : écrivez une question.' };
+    return { ok: false, error: 'Le message ne doit pas être vide.' };
   }
   if (value.length > LIMITE) {
-    return { ok: false, error: `Message trop long : ${LIMITE} caractères maximum.` };
+    return { ok: false, error: `Le message doit contenir ${LIMITE} caractères au maximum.` };
   }
   return { ok: true, value };
 }
 
-// Découpe le message en mots entiers, en minuscules et sans accents :
-// « Combien coûte un ticket ? » donne ['combien', 'coute', 'un', 'ticket'].
-function mots(message) {
-  return String(message)
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .split(/[^a-z0-9]+/)
-    .filter((mot) => mot !== '');
+export function replyTo(message) {
+  const texte = String(message).trim().toLowerCase();
+  if (texte === 'salut' || texte === 'bonjour') {
+    return REPONSES.salut;
+  }
+  if (texte === 'aide') {
+    return REPONSES.aide;
+  }
+  if (texte === 'test') {
+    return REPONSES.test;
+  }
+  if (Object.hasOwn(MOTS, texte)) {
+    return MOTS[texte];
+  }
+  // Message inconnu : un repli distinct, qui renvoie vers « aide ».
+  return REPONSES.repli;
 }
 
-// Les règles, dans l'ordre de priorité : la première dont un mot-clé apparaît
-// dans le message donne la réponse. Seuls les mots entiers comptent :
-// « tester » ne déclenche pas la règle de « test ».
-const REGLES = [
-  { motsCles: ['tarif', 'tarifs', 'prix', 'ticket', 'tickets', 'billet', 'billets', 'coute', 'coutent', 'abonnement'], reponse: REPONSE_TARIFS },
-  { motsCles: ['horaire', 'horaires', 'heure', 'heures', 'dernier', 'derniere', 'premier', 'premiere', 'quand'], reponse: REPONSE_HORAIRES },
-  { motsCles: ['trajet', 'itineraire', 'aller', 'rejoindre', 'gare', 'universite'], reponse: REPONSE_TRAJET },
-  { motsCles: ['aide', 'aider', 'help'], reponse: REPONSE_AIDE },
-  { motsCles: ['test'], reponse: REPONSE_TEST },
-  { motsCles: ['salut', 'bonjour', 'bonsoir', 'hello'], reponse: REPONSE_SALUT }
-];
-
-// Choisit la réponse à partir des mots-clés du message,
-// sans tenir compte des majuscules, des accents ni de la ponctuation.
-export function replyTo(message) {
-  const liste = mots(message);
-  for (const regle of REGLES) {
-    if (regle.motsCles.some((motCle) => liste.includes(motCle))) {
-      return regle.reponse;
-    }
+// Vrai si le message contient au moins deux lettres et aucune minuscule.
+// Les accents comptent comme des lettres (« OÙ »), les chiffres et la ponctuation non.
+export function estEnMajuscules(message) {
+  if (typeof message !== 'string') {
+    return false;
   }
-  return REPONSE_REPLI;
+  const lettres = message.match(/\p{L}/gu) ?? [];
+  return lettres.length >= 2 && !/\p{Ll}/u.test(message);
+}
+
+// Nombre de mots du message : tout groupe d'espaces, tabulations ou retours à la ligne sépare deux mots.
+export function compterMots(message) {
+  if (typeof message !== 'string') {
+    return 0;
+  }
+  const texte = message.trim();
+  return texte === '' ? 0 : texte.split(/\s+/).length;
+}
+
+// Vrai si m ressemble à un message de l'historique : un objet avec un rôle connu et un texte.
+// Sert à trier ce qui revient du stockage du navigateur, qui peut être abîmé.
+export function estMessage(m) {
+  return typeof m === 'object'
+    && m !== null
+    && (m.role === 'user' || m.role === 'assistant')
+    && typeof m.text === 'string';
 }

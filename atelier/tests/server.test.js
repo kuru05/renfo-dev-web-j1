@@ -4,8 +4,9 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createApp } from '../server/app.js';
 
-// Contrôles du serveur local fourni pour Cap Web.
-// La suite passe sur le point de départ ; elle ne valide ni votre HTML ni votre CSS, mais elle rougit si le serveur se met à servir ses propres fichiers (`server/`, `package.json`, `.env`).
+// Tests rouges J1 pour Cap Web.
+// Vérifie le contrat statique du serveur local (outillage fourni).
+// Ces tests échouent tant que server/app.js et public/ manquent.
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

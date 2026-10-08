@@ -9,28 +9,51 @@
 <body>
   <header>
     <h1>Cap Web</h1>
-    <p>Assistant pour les voyageurs d’un réseau de bus et de tram : trajets, lignes, horaires, tarifs.</p>
+    <p>Assistant fictif du réseau de bus et de tram : il vous aide à aller d’un point A à un point B. Réponses à règles, pas une IA réelle.</p>
   </header>
   <main>
-    <section aria-labelledby="titre-discussion">
-      <h2 id="titre-discussion">Discussion</h2>
-      <ul id="messages" aria-label="Messages"></ul>
+    <section aria-labelledby="titre-trajet" class="itineraire">
+      <h2 id="titre-trajet">Itinéraire</h2>
+      <form id="trajet-form">
+        <div class="choix-arrets">
+          <div>
+            <label for="depart">Départ</label>
+            <select id="depart" name="depart" required>
+              <option value="">Choisir un arrêt</option>
+            </select>
+          </div>
+          <div>
+            <label for="arrivee">Arrivée</label>
+            <select id="arrivee" name="arrivee" required>
+              <option value="">Choisir un arrêt</option>
+            </select>
+          </div>
+        </div>
+        <button type="submit">Trouver le trajet</button>
+      </form>
+      <p id="trajet-resume" aria-live="polite">Choisissez un départ et une arrivée, dans les listes ou en cliquant sur la carte.</p>
+      <ol id="etapes"></ol>
+      <svg id="carte" viewBox="0 0 620 390" role="img" aria-labelledby="titre-carte">
+        <title id="titre-carte">Plan du réseau fictif de bus et de tram</title>
+      </svg>
+      <ul id="legende" aria-label="Lignes du réseau"></ul>
+    </section>
+
+    <section aria-labelledby="titre-chat">
+      <h2 id="titre-chat">Discussion</h2>
+      <ul id="messages" aria-live="polite" aria-label="Messages"></ul>
       <form id="chat-form">
-        <label for="message">Votre message (280 caractères maximum)</label>
-        <textarea id="message" name="message" rows="3" maxlength="280" required></textarea>
+        <label for="message">Votre message (<span id="limite">…</span> caractères maximum)</label>
+        <textarea id="message" name="message" rows="3" required aria-describedby="compteur"></textarea>
+        <p id="compteur"></p>
         <button type="submit">Envoyer</button>
       </form>
-      <ul id="suggestions">
-        <li><button type="button">Comment aller de la gare à l’université ?</button></li>
-        <li><button type="button">Combien coûte un ticket ?</button></li>
-        <li><button type="button">À quelle heure passe le dernier tram ?</button></li>
-      </ul>
       <button type="button" id="effacer">Effacer la conversation</button>
       <p id="status" role="status"></p>
     </section>
   </main>
   <footer>
-    <p>Atelier Cap Web, jour 1. <span id="version">version J1</span></p>
+    <p>Serveur local fourni pour l’atelier. <span id="version">version…</span></p>
   </footer>
   <script type="module" src="./js/app.js"></script>
 </body>
