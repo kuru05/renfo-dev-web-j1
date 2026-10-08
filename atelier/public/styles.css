@@ -395,3 +395,15 @@ footer {
     --bulle: #262f34;
   }
 }
+
+/* Le compteur prévient à 90 % de la limite (classe ajoutée par app.js). */
+#compteur.alerte {
+  color: #b00020;
+  font-weight: 700;
+}
+
+@media (prefers-color-scheme: dark) {
+  #compteur.alerte {
+    color: #ff8a80;
+  }
+}
