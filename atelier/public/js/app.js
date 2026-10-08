@@ -42,6 +42,15 @@ function mettreAJourCompteur() {
 
 champ.addEventListener('input', mettreAJourCompteur);
 
+// Entrée envoie le message, Maj+Entrée va à la ligne, comme dans une messagerie.
+// requestSubmit passe par l'écouteur submit : la validation reste la même.
+champ.addEventListener('keydown', (event) => {
+  if (event.key === 'Enter' && !event.shiftKey) {
+    event.preventDefault();
+    formulaire.requestSubmit();
+  }
+});
+
 // Demande un conseil au serveur ; en cas de panne, un message clair plutôt qu'un écran blanc.
 async function demanderConseil() {
   try {
