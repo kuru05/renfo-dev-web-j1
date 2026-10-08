@@ -8,12 +8,12 @@ Pour chaque notion, chacun écrit « à l'aise » ou « à renforcer ». Ce n'es
 
 | Notion | Hugo : | Merlin : | Louis : |
 |---|---|---|---|
-| Structure HTML | | | |
-| CSS et responsive | | | |
-| JavaScript | | | |
-| DOM et événements | | | |
-| Git | | | |
-| Tests | | | |
+| Structure HTML | | | à l'aise |
+| CSS et responsive | | | à l'aise |
+| JavaScript | | | à renforcer |
+| DOM et événements | | | à renforcer |
+| Git | | | à renforcer |
+| Tests | | | à renforcer |
 
 Chacun, en une phrase, son objectif personnel pour J2 et J3.
 
@@ -21,7 +21,7 @@ Hugo :
 
 Merlin :
 
-Louis :
+Louis : savoir faire une branche et une pull request tout seul, et comprendre ce que vérifie un test.
 
 ## R1 · Les tests automatisés
 
@@ -136,19 +136,20 @@ Thème : réseau de bus et de tram (fictif). Cap Web recommande des trajets d'un
 
 ## Étape 8 · Le projet sur GitHub
 
-- Dépôt distant utilisé, et qui l'a créé :
-- Branche poussée :
-- Le clone de l'autre personne lance Cap Web (`npm ci`, `npm start`) :
+- Dépôt distant utilisé, et qui l'a créé : Louis a d'abord créé un dépôt, mais on a eu un problème avec. Merlin a donc créé `kuru05/renfo-dev-web-j1` et y a poussé tout le code. C'est le dépôt qu'on utilise.
+- Branche poussée : `main` (jour 1), puis `jour2` et `jour3`, par Merlin.
+- Le clone de l'autre personne lance Cap Web (`npm ci`, `npm start`) : oui, Louis a cloné le dépôt et Cap Web se lance chez lui.
 
 ## Étape 9 · Chacun sa branche
 
-- Branche et pull request de A (arborescence du README) :
-- Branche et pull request de B (couleur dans `styles.css`) :
+- Branche et pull request de Louis : branche `louis/bonus`, pull request #1 (les étapes bonus 13 à 18).
+- Branche et pull request de Merlin : Merlin a poussé son travail directement sur `main`, `jour2` et `jour3`.
+- Hugo : pas de branche ni de pull request.
 
 ## Étape 10 · La revue croisée
 
-- Commentaire laissé sur la pull request de l'autre (type et fait précis) :
-- Les deux fusions visibles dans `git log --oneline --graph` :
+- Commentaire laissé sur la pull request de l'autre (type et fait précis) : Merlin a relu la pull request #1 de Louis avant de la fusionner.
+- Les fusions visibles dans `git log --oneline --graph` : `c62f317 Merge pull request #1 from kuru05/louis/bonus`.
 
 ## Étape 11 · Les quatre attaques
 
@@ -175,6 +176,6 @@ Thème : réseau de bus et de tram (fictif). Cap Web recommande des trajets d'un
 
 ## Étape 12 · Le bilan
 
-- Bilans écrits dans `bilan/` (un fichier par personne) :
+- Bilans écrits dans `bilan/` (un fichier par personne) : `atelier/bilan/Louis.md`.
 - `git push` répond « Everything up-to-date » chez chacun :
 - Checklist du livrable entièrement cochée :
