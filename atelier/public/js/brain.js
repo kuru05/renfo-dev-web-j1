@@ -68,3 +68,12 @@ export function compterMots(message) {
   const texte = message.trim();
   return texte === '' ? 0 : texte.split(/\s+/).length;
 }
+
+// Vrai si m ressemble à un message de l'historique : un objet avec un rôle connu et un texte.
+// Sert à trier ce qui revient du stockage du navigateur, qui peut être abîmé.
+export function estMessage(m) {
+  return typeof m === 'object'
+    && m !== null
+    && (m.role === 'user' || m.role === 'assistant')
+    && typeof m.text === 'string';
+}

@@ -1,6 +1,6 @@
 // Cap Web — câblage : lire les formulaires, mettre à jour l'historique, demander l'affichage
 // de la discussion (view.js) et du trajet (carte.js), appeler le serveur (version, conseil).
-import { validateMessage, replyTo, LIMITE } from './brain.js';
+import { validateMessage, replyTo, estMessage, LIMITE } from './brain.js';
 import { renderMessages } from './view.js';
 import { RESEAU, listerArrets, calculerItineraire, decrireEtape, resumerItineraire } from './reseau.js';
 import { dessinerCarte, dessinerLegende, surlignerItineraire, remplirListeArrets, afficherEtapes } from './carte.js';
@@ -29,7 +29,7 @@ function charger() {
   try {
     const donnees = JSON.parse(brut);
     if (Array.isArray(donnees)) {
-      historique.push(...donnees);
+      historique.push(...donnees.filter(estMessage));
     }
   } catch {
     statut.textContent = 'Conversation précédente illisible : nouvelle conversation.';
